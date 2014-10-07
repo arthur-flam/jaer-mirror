@@ -1,0 +1,1 @@
+USBTransferThread - 0.8.6 - https://github.com/llongi/USBTransferThread/
