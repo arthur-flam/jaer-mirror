@@ -13,7 +13,7 @@ import net.sf.jaer2.eventio.events.PolarityEvent;
 import net.sf.jaer2.eventio.events.SpecialEvent;
 import net.sf.jaer2.eventio.events.raw.RawEvent;
 import net.sf.jaer2.eventio.translators.DeviceTranslator;
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

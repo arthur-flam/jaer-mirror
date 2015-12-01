@@ -4,23 +4,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
-import javafx.application.Application;
-import javafx.geometry.Rectangle2D;
-import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
+import java.util.Collections;
 
 import javax.management.modelmbean.XMLParseException;
-
-import net.sf.jaer2.util.Files;
-import net.sf.jaer2.util.SSHS;
 
 import org.xml.sax.SAXException;
 
 import ch.unizh.ini.devices.ApsDvs10FX3;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import net.sf.jaer.jaerfx2.Files;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.SSHS;
 
 public final class JAER2 extends Application {
 	public static final String homeDirectory = System.getProperty("user.home") + File.separator + "jAER2";
@@ -33,13 +29,17 @@ public final class JAER2 extends Application {
 
 	@Override
 	public void start(final Stage primaryStage) {
+		if (!GUISupport.checkJavaVersion(primaryStage)) {
+			return;
+		}
+
 		final String lastSessionDirectory = JAER2.homeDirectory + File.separator + "lastSession";
 		final File savedSession = new File(lastSessionDirectory + File.separator + "net-last.xml");
 
 		if (Files.checkReadPermissions(savedSession)) {
 			// Restore configuration from saved file.
-			try {
-				SSHS.GLOBAL.getNode("/").importSubTreeFromXML(new FileInputStream(savedSession), true);
+			try (FileInputStream fin = new FileInputStream(savedSession)) {
+				SSHS.GLOBAL.getNode("/").importSubTreeFromXML(fin, true);
 			}
 			catch (SAXException | IOException | XMLParseException e) {
 				// TODO Auto-generated catch block
@@ -49,24 +49,12 @@ public final class JAER2 extends Application {
 
 		final ApsDvs10FX3 dvs = new ApsDvs10FX3(null);
 
-		final BorderPane main = new BorderPane();
-		main.setCenter(dvs.getConfigGUI());
-
-		final Rectangle2D screen = Screen.getPrimary().getVisualBounds();
-		final Scene rootScene = new Scene(main, screen.getWidth(), screen.getHeight(), Color.GRAY);
-
-		// Add default CSS style-sheet.
-		rootScene.getStylesheets().add("/styles/root.css");
-
-		primaryStage.setTitle("jAER2 Device Configuration");
-		primaryStage.setScene(rootScene);
-
-		primaryStage.setOnCloseRequest((event) -> {
+		final Scene rootScene = GUISupport.startGUI(primaryStage, dvs.getConfigGUI(), "jAER2 Device Configuration", (event) -> {
 			// Try to save the current configuration to file.
 			if (Files.checkWritePermissions(savedSession)) {
-				try {
+				try (FileOutputStream fout = new FileOutputStream(savedSession)) {
 					savedSession.getParentFile().mkdirs();
-					SSHS.GLOBAL.getNode("/").exportSubTreeToXML(new FileOutputStream(savedSession));
+					SSHS.GLOBAL.getNode("/").exportSubTreeToXML(fout, Collections.emptyList());
 				}
 				catch (final IOException e) {
 					// TODO Auto-generated catch block
@@ -75,6 +63,7 @@ public final class JAER2 extends Application {
 			}
 		});
 
-		primaryStage.show();
+		// Add default CSS style-sheet.
+		rootScene.getStylesheets().add("/styles/root.css");
 	}
 }

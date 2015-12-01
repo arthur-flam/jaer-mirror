@@ -1,13 +1,12 @@
 package net.sf.jaer2.devices.config;
 
 import javafx.scene.control.CheckBox;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.SSHSAttribute;
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.SSHS.SSHSType;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public final class ConfigBit extends ConfigBase {
 	private final int address;
-	private final SSHSAttribute<Boolean> configAttr;
 
 	public ConfigBit(final String name, final String description, final SSHSNode configNode, final boolean defaultValue) {
 		this(name, description, configNode, null, defaultValue);
@@ -28,16 +27,15 @@ public final class ConfigBit extends ConfigBase {
 			this.address = -1;
 		}
 
-		configAttr = configNode.getAttribute(name, Boolean.class);
 		setValue(defaultValue);
 	}
 
 	public boolean getValue() {
-		return configAttr.getValue();
+		return getConfigNode().getBool(getName());
 	}
 
 	public void setValue(final boolean val) {
-		configAttr.setValue(val);
+		getConfigNode().putBool(getName(), val);
 	}
 
 	@Override
@@ -62,8 +60,11 @@ public final class ConfigBit extends ConfigBase {
 
 		valBox.selectedProperty().addListener((valueRef, oldValue, newValue) -> setValue(newValue));
 
-		configAttr.addListener(
-			(node, userData, event, oldValue, newValue) -> valBox.selectedProperty().setValue(newValue), null);
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.BOOL) && changeKey.equals(getName())) {
+				valBox.selectedProperty().setValue(changeValue.getBoolean());
+			}
+		});
 	}
 
 	@Override

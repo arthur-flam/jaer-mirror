@@ -1,6 +1,6 @@
 package net.sf.jaer2.devices.config.pots;
 
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public class AddressedIPot extends IPot {
 	/** The address to send in advance of this Pot. */

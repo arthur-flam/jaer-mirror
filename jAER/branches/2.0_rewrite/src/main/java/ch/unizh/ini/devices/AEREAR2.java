@@ -1,5 +1,9 @@
 package ch.unizh.ini.devices;
 
+import org.usb4java.Device;
+
+import ch.unizh.ini.devices.components.aer.CochleaAMS1c;
+import ch.unizh.ini.devices.components.misc.AD5391_32chan;
 import net.sf.jaer2.devices.USBDevice;
 import net.sf.jaer2.devices.components.aer.AERChip;
 import net.sf.jaer2.devices.components.controllers.FX2;
@@ -9,18 +13,11 @@ import net.sf.jaer2.devices.components.misc.DAC;
 import net.sf.jaer2.devices.components.misc.memory.EEPROM_I2C;
 import net.sf.jaer2.devices.components.misc.memory.Memory;
 import net.sf.jaer2.devices.config.ConfigBit;
-import net.sf.jaer2.devices.config.ConfigBitTristate;
-import net.sf.jaer2.devices.config.ConfigBitTristate.Tristate;
 import net.sf.jaer2.devices.config.ConfigInt;
 import net.sf.jaer2.devices.config.ShiftRegisterContainer;
 import net.sf.jaer2.devices.config.pots.Pot;
 import net.sf.jaer2.devices.config.pots.VPot;
 import net.sf.jaer2.eventio.translators.Translator;
-
-import org.usb4java.Device;
-
-import ch.unizh.ini.devices.components.aer.CochleaAMS1c;
-import ch.unizh.ini.devices.components.misc.AD5391_32chan;
 
 public class AEREAR2 extends USBDevice {
 	@SuppressWarnings("hiding")
@@ -63,9 +60,9 @@ public class AEREAR2 extends USBDevice {
 		cpldSR.addSetting(new ConfigInt("onchipPreampGain", ".", cpldSR.getConfigNode(), (byte) 3, 2));
 		cpldSR.addSetting(new ConfigBit("selAER", ".", cpldSR.getConfigNode(), true));
 		cpldSR.addSetting(new ConfigBit("selIn", ".", cpldSR.getConfigNode(), false));
-		cpldSR.addSetting(new ConfigBitTristate("preampAttackRelease", ".", cpldSR.getConfigNode(), Tristate.LOW));
-		cpldSR.addSetting(new ConfigBitTristate("preampGain.Left", ".", cpldSR.getConfigNode(), Tristate.HIZ));
-		cpldSR.addSetting(new ConfigBitTristate("preampGain.Right", ".", cpldSR.getConfigNode(), Tristate.HIZ));
+		//cpldSR.addSetting(new ConfigBitTristate("preampAttackRelease", ".", cpldSR.getConfigNode(), Tristate.LOW));
+		//cpldSR.addSetting(new ConfigBitTristate("preampGain.Left", ".", cpldSR.getConfigNode(), Tristate.HIZ));
+		//cpldSR.addSetting(new ConfigBitTristate("preampGain.Right", ".", cpldSR.getConfigNode(), Tristate.HIZ));
 		cpldSR.addSetting(new ConfigInt("adcConfig", ".", cpldSR.getConfigNode(), (short) 4, 12));
 		cpldSR.addSetting(new ConfigInt("adcTrackTime", ".", cpldSR.getConfigNode(), 0, 16));
 		cpldSR.addSetting(new ConfigInt("adcIdleTime", ".", cpldSR.getConfigNode(), 0, 16));

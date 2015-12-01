@@ -5,10 +5,10 @@ import java.util.Map;
 
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.SSHS;
-import net.sf.jaer2.util.SSHSNode;
-import net.sf.jaer2.util.SSHSNode.SSHSNodeListener.NodeEvents;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.SSHS;
+import net.sf.jaer.jaerfx2.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode.SSHSAttrListener.AttributeEvents;
 
 /**
  * This configuration component is just a container for other settings.
@@ -25,8 +25,7 @@ public final class ShiftRegisterContainer extends ConfigBase {
 
 	private int currentNumBitsUsed = 0;
 
-	public ShiftRegisterContainer(final String name, final String description, final SSHSNode configNode,
-		final int numBits) {
+	public ShiftRegisterContainer(final String name, final String description, final SSHSNode configNode, final int numBits) {
 		super(name, description, configNode, numBits);
 
 		// Reset config node to be one level deeper that what is passed in, so
@@ -73,8 +72,8 @@ public final class ShiftRegisterContainer extends ConfigBase {
 		int bitPosition = 0;
 
 		for (final ConfigBase cfg : settingsMap.values()) {
-			ShiftRegisterContainer.bitArrayCopy(cfg.getBinaryRepresentation(),
-				(cfg.getNumBytes() * Byte.SIZE) - cfg.getNumBits(), bytes, bitPosition, cfg.getNumBits());
+			ShiftRegisterContainer.bitArrayCopy(cfg.getBinaryRepresentation(), (cfg.getNumBytes() * Byte.SIZE) - cfg.getNumBits(), bytes,
+				bitPosition, cfg.getNumBits());
 			bitPosition += cfg.getNumBits();
 		}
 
@@ -96,8 +95,7 @@ public final class ShiftRegisterContainer extends ConfigBase {
 	 * @param length
 	 *            number of bits to copy.
 	 */
-	private static void bitArrayCopy(final byte[] src, final int srcPos, final byte[] dest, final int destPos,
-		final int length) {
+	private static void bitArrayCopy(final byte[] src, final int srcPos, final byte[] dest, final int destPos, final int length) {
 		int copyOffset = 0;
 
 		while (copyOffset < length) {
@@ -124,19 +122,18 @@ public final class ShiftRegisterContainer extends ConfigBase {
 		// Put all settings vertically.
 		final VBox vSettings = new VBox(5);
 
-		final Label binaryRep = GUISupport.addLabel(vSettings, getBinaryRepresentationAsString(),
-			"Binary data to be sent to the device.", null, null);
+		final Label binaryRep = GUISupport.addLabel(vSettings, getBinaryRepresentationAsString(), "Binary data to be sent to the device.");
 
 		// Add listener directly to the node, so that any change to a
 		// subordinate setting results in the update of the shift register
 		// display value.
-		configNode.addNodeListener((node, userData, event, key) -> {
-			if (event == NodeEvents.ATTRIBUTE_MODIFIED) {
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if (event == AttributeEvents.ATTRIBUTE_MODIFIED) {
 				// On any subordinate attribute update, refresh the
 				// displayed value.
-			binaryRep.setText(getBinaryRepresentationAsString());
-		}
-	}, null);
+				binaryRep.setText(getBinaryRepresentationAsString());
+			}
+		});
 
 		// Fill the vertical box with the settings.
 		for (final ConfigBase cfg : settingsMap.values()) {

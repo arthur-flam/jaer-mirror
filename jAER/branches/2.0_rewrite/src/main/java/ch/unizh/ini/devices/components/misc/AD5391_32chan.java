@@ -1,7 +1,7 @@
 package ch.unizh.ini.devices.components.misc;
 
 import net.sf.jaer2.devices.components.misc.DAC;
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public class AD5391_32chan extends DAC {
 	public AD5391_32chan(final SSHSNode componentConfigNode) {

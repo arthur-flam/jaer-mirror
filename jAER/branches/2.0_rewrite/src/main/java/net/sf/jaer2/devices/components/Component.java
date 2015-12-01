@@ -9,7 +9,7 @@ import javafx.scene.layout.VBox;
 import net.sf.jaer2.devices.Device;
 import net.sf.jaer2.devices.components.controllers.Controller;
 import net.sf.jaer2.devices.config.ConfigBase;
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public abstract class Component {
 	private final Map<String, ConfigBase> settingsMap = new LinkedHashMap<>();

@@ -2,15 +2,16 @@ package net.sf.jaer2.devices.config;
 
 import java.util.EnumSet;
 
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.Numbers.NumberFormat;
-import net.sf.jaer2.util.Numbers.NumberOptions;
-import net.sf.jaer2.util.SSHSAttribute;
-import net.sf.jaer2.util.SSHSNode;
+import javafx.beans.property.LongProperty;
+import net.sf.jaer.jaerfx2.BoundedProperties;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.Numbers.NumberFormat;
+import net.sf.jaer.jaerfx2.Numbers.NumberOptions;
+import net.sf.jaer.jaerfx2.SSHS.SSHSType;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public final class ConfigLong extends ConfigBase {
 	private final int address;
-	private final SSHSAttribute<Long> configAttr;
 
 	public ConfigLong(final String name, final String description, final SSHSNode configNode, final long defaultValue) {
 		this(name, description, configNode, null, defaultValue);
@@ -21,8 +22,7 @@ public final class ConfigLong extends ConfigBase {
 		this(name, description, configNode, address, defaultValue, Long.SIZE);
 	}
 
-	public ConfigLong(final String name, final String description, final SSHSNode configNode, final long defaultValue,
-		final int numBits) {
+	public ConfigLong(final String name, final String description, final SSHSNode configNode, final long defaultValue, final int numBits) {
 		this(name, description, configNode, null, defaultValue, numBits);
 	}
 
@@ -31,13 +31,11 @@ public final class ConfigLong extends ConfigBase {
 		super(name, description, configNode, numBits);
 
 		if (numBits < 33) {
-			throw new IllegalArgumentException(
-				"Invalid numBits value, must be at least 33. Use ConfigInt for smaller quantities.");
+			throw new IllegalArgumentException("Invalid numBits value, must be at least 33. Use ConfigInt for smaller quantities.");
 		}
 
 		if (numBits > 64) {
-			throw new IllegalArgumentException(
-				"Invalid numBits value, must be at most 64. Larger quantities are not supported.");
+			throw new IllegalArgumentException("Invalid numBits value, must be at most 64. Larger quantities are not supported.");
 		}
 
 		if (address != null) {
@@ -51,16 +49,15 @@ public final class ConfigLong extends ConfigBase {
 			this.address = -1;
 		}
 
-		configAttr = configNode.getAttribute(name, Long.class);
 		setValue(defaultValue);
 	}
 
 	public long getValue() {
-		return configAttr.getValue();
+		return getConfigNode().getLong(getName());
 	}
 
 	public void setValue(final long val) {
-		configAttr.setValue(val);
+		getConfigNode().putLong(getName(), val);
 	}
 
 	@Override
@@ -81,12 +78,21 @@ public final class ConfigLong extends ConfigBase {
 	protected void buildConfigGUI() {
 		super.buildConfigGUI();
 
-		GUISupport.addTextNumberField(rootConfigLayout, configAttr, 19, getMinBitValue(), getMaxBitValue(),
-			NumberFormat.DECIMAL, EnumSet.of(NumberOptions.UNSIGNED), null);
+		final LongProperty longProp = new BoundedProperties.BoundedLongProperty(getValue(), getMinBitValue(), getMaxBitValue());
 
-		GUISupport.addTextNumberField(rootConfigLayout, configAttr, getNumBits(), getMinBitValue(), getMaxBitValue(),
-			NumberFormat.BINARY,
+		GUISupport.addTextNumberField(rootConfigLayout, longProp, 19, getMinBitValue(), getMaxBitValue(), NumberFormat.DECIMAL,
+			EnumSet.of(NumberOptions.UNSIGNED), null);
+
+		GUISupport.addTextNumberField(rootConfigLayout, longProp, getNumBits(), getMinBitValue(), getMaxBitValue(), NumberFormat.BINARY,
 			EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.LEFT_PADDING, NumberOptions.ZERO_PADDING), null);
+
+		longProp.addListener((valueRef, oldValue, newValue) -> setValue(newValue.longValue()));
+
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.LONG) && changeKey.equals(getName())) {
+				longProp.set(changeValue.getLong());
+			}
+		});
 	}
 
 	@Override

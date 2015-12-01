@@ -7,9 +7,13 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -20,18 +24,31 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import net.sf.jaer.jaerfx2.CollectionsUpdate;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.PairRO;
+import net.sf.jaer.jaerfx2.Reflections;
 import net.sf.jaer2.eventio.ProcessorChain;
 import net.sf.jaer2.eventio.eventpackets.EventPacketContainer;
 import net.sf.jaer2.eventio.events.Event;
-import net.sf.jaer2.util.CollectionsUpdate;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.PairRO;
-import net.sf.jaer2.util.Reflections;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.sf.jaer2.eventio.sinks.Sink;
+import net.sf.jaer2.eventio.sources.Source;
+import net.sf.jaer2.eventio.translators.Translator;
 
 public abstract class Processor implements Runnable {
+
+	/** List of classes extending EventProcessor. */
+	public static final SortedSet<Class<? extends EventProcessor>> eventProcessorTypes = Reflections.getSubClasses(EventProcessor.class);
+
+	/** List of classes extending Source. */
+	public static final SortedSet<Class<? extends Source>> sourceTypes = Reflections.getSubClasses(Source.class);
+
+	/** List of classes extending Translator. */
+	public static final SortedSet<Class<? extends Translator>> translatorTypes = Reflections.getSubClasses(Translator.class);
+
+	/** List of classes extending Sink. */
+	public static final SortedSet<Class<? extends Sink>> sinkTypes = Reflections.getSubClasses(Sink.class);
+
 	/**
 	 * Enumeration containing the available processor types and their string
 	 * representations for printing.
@@ -102,8 +119,7 @@ public abstract class Processor implements Runnable {
 	 * selectedInputStreams, for use inside processors, and as such limited to
 	 * read-only operations.
 	 */
-	protected final List<Stream> selectedInputStreamsReadOnly = Collections
-		.unmodifiableList(selectedInputStreams);
+	protected final List<Stream> selectedInputStreamsReadOnly = Collections.unmodifiableList(selectedInputStreams);
 
 	/** Queue containing all containers to process. */
 	protected final BlockingQueue<EventPacketContainer> workQueue = new ArrayBlockingQueue<>(16);
@@ -202,7 +218,7 @@ public abstract class Processor implements Runnable {
 			Reflections.setFinalField(this, "processorId", parentChain.getNextAvailableProcessorID());
 
 			// Update UI to show new ID number.
-			GUISupport.runTasksCollection(rootTasksUIRefresh);
+			GUISupport.runTasksOnJavaFXThread(rootTasksUIRefresh);
 		}
 	}
 
@@ -225,7 +241,7 @@ public abstract class Processor implements Runnable {
 		nextProcessor = next;
 
 		// Update UI to show/hide the Types box.
-		GUISupport.runTasksCollection(rootTasksUIRefresh);
+		GUISupport.runTasksOnJavaFXThread(rootTasksUIRefresh);
 	}
 
 	protected abstract void setCompatibleInputTypes(Set<Class<? extends Event>> inputs);
@@ -315,7 +331,7 @@ public abstract class Processor implements Runnable {
 	}
 
 	public final void rebuildStreamSets() {
-		GUISupport.runOnJavaFXThread(new Runnable() {
+		GUISupport.runTaskOnJavaFXThread(new Runnable() {
 			@Override
 			public void run() {
 				Processor.logger.debug("Rebuilding StreamSets for {}.", Processor.this.toString());
@@ -324,7 +340,7 @@ public abstract class Processor implements Runnable {
 				rebuildOutputStreams();
 
 				// Update UI after changes to streams.
-				GUISupport.runTasksCollection(rootTasksUIRefresh);
+				GUISupport.runTasksOnJavaFXThread(rootTasksUIRefresh);
 
 				// Call recursively on the next Processor, so that the rest of
 				// the chain gets updated correctly.
@@ -385,7 +401,7 @@ public abstract class Processor implements Runnable {
 			buildGUI();
 
 			// Ensure display of all newly built GUI elements.
-			GUISupport.runTasksCollection(rootTasksUIRefresh);
+			GUISupport.runTasksOnJavaFXThread(rootTasksUIRefresh);
 		}
 
 		return rootLayout;
@@ -415,28 +431,28 @@ public abstract class Processor implements Runnable {
 		final HBox configButtonBox = new HBox(5);
 		processorBox.getChildren().add(configButtonBox);
 
-		GUISupport.addButtonWithMouseClickedHandler(configButtonBox, "Remove Processor", false,
-			"/images/icons/Remove.png", new EventHandler<MouseEvent>() {
+		GUISupport.addButtonWithMouseClickedHandler(configButtonBox, "Remove Processor", false, "/images/icons/Remove.png",
+			new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(@SuppressWarnings("unused") final MouseEvent event) {
 					parentChain.removeProcessor(Processor.this);
 				}
 			});
 
-		GUISupport.addButtonWithMouseClickedHandler(configButtonBox, "Save Processor", false,
-			"/images/icons/Export To Document.png", new EventHandler<MouseEvent>() {
+		GUISupport.addButtonWithMouseClickedHandler(configButtonBox, "Save Processor", false, "/images/icons/Export To Document.png",
+			new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(@SuppressWarnings("unused") final MouseEvent event) {
 					// TODO: SSHS export.
 				}
 			});
 
-		GUISupport.addButtonWithMouseClickedHandler(configButtonBox, "Configure Processor", false,
-			"/images/icons/Gear.png", new EventHandler<MouseEvent>() {
+		GUISupport.addButtonWithMouseClickedHandler(configButtonBox, "Configure Processor", false, "/images/icons/Gear.png",
+			new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(@SuppressWarnings("unused") final MouseEvent event) {
-					GUISupport.showDialog("Processor Configuration", getConfigGUI(), rootConfigTasksDialogRefresh,
-						rootConfigTasksDialogOK, rootTasksUIRefresh);
+					GUISupport.showDialog("Processor Configuration", getConfigGUI(), rootConfigTasksDialogRefresh, rootConfigTasksDialogOK,
+						rootTasksUIRefresh);
 				}
 			});
 
@@ -455,8 +471,8 @@ public abstract class Processor implements Runnable {
 					GUISupport.addLabel(selectedInputStreamsBox, "Currently processing:", null, null, null);
 
 					for (final Stream selInStream : selectedInputStreams) {
-						GUISupport.addLabel(selectedInputStreamsBox, String.format("< %s, %d >", selInStream.getFirst()
-							.getSimpleName(), selInStream.getSecond()), null, null, null);
+						GUISupport.addLabel(selectedInputStreamsBox,
+							String.format("< %s, %d >", selInStream.getFirst().getSimpleName(), selInStream.getSecond()), null, null, null);
 					}
 				}
 			}
@@ -480,8 +496,7 @@ public abstract class Processor implements Runnable {
 
 					for (final Stream outStream : outputStreams) {
 						GUISupport.addLabel(typesBox,
-							String.format("< %s, %d >", outStream.getFirst().getSimpleName(), outStream.getSecond()),
-							null, null, null);
+							String.format("< %s, %d >", outStream.getFirst().getSimpleName(), outStream.getSecond()), null, null, null);
 					}
 				}
 
@@ -545,8 +560,7 @@ public abstract class Processor implements Runnable {
 		rootConfigTasksDialogOK.add(new Runnable() {
 			@Override
 			public void run() {
-				if (CollectionsUpdate.replaceNonDestructive(selectedInputStreams, streamsView.getSelectionModel()
-					.getSelectedItems())) {
+				if (CollectionsUpdate.replaceNonDestructive(selectedInputStreams, streamsView.getSelectionModel().getSelectedItems())) {
 					// Changing anything about the selected input streams is
 					// considered a structural change, as it requires updating
 					// the chain's stream information.

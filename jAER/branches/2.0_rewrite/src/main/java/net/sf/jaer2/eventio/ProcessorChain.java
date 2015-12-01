@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
@@ -19,17 +22,14 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.Reflections;
 import net.sf.jaer2.eventio.processors.EventProcessor;
 import net.sf.jaer2.eventio.processors.InputProcessor;
 import net.sf.jaer2.eventio.processors.OutputProcessor;
 import net.sf.jaer2.eventio.processors.Processor;
 import net.sf.jaer2.eventio.processors.Processor.ProcessorTypes;
 import net.sf.jaer2.eventio.translators.Translator;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.Reflections;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public final class ProcessorChain  {
 	/** Local logger for log messages. */
@@ -314,7 +314,7 @@ public final class ProcessorChain  {
 
 		// Create EventProcessor type chooser box.
 		final ComboBox<Class<? extends EventProcessor>> eventProcessorTypeChooser = GUISupport.addComboBox(null,
-			Reflections.eventProcessorTypes, 0);
+			Processor.eventProcessorTypes, 0);
 		final HBox eventProcessorTypeChooserBox = GUISupport.addLabelWithControlsHorizontal(rootConfigLayout,
 			"Event Processor:", "Select the Event Processor you want to use.", eventProcessorTypeChooser);
 
@@ -498,7 +498,7 @@ public final class ProcessorChain  {
 			return;
 		}
 
-		GUISupport.runOnJavaFXThread(new Runnable() {
+		GUISupport.runTaskOnJavaFXThread(new Runnable() {
 			@Override
 			public void run() {
 				processor.setParentChain(ProcessorChain.this);
@@ -523,7 +523,7 @@ public final class ProcessorChain  {
 	 *            processor to remove.
 	 */
 	public void removeProcessor(final Processor processor) {
-		GUISupport.runOnJavaFXThread(new Runnable() {
+		GUISupport.runTaskOnJavaFXThread(new Runnable() {
 			@Override
 			public void run() {
 				unlinkProcessor(processor);
@@ -545,7 +545,7 @@ public final class ProcessorChain  {
 	 * in any way (such as in the Synchronizer when enabling new outputs).
 	 */
 	public void newStructuralChangesToCommit() {
-		GUISupport.runOnJavaFXThread(new Runnable() {
+		GUISupport.runTaskOnJavaFXThread(new Runnable() {
 			@Override
 			public void run() {
 				changesToCommit.set(true);

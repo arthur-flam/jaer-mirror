@@ -2,18 +2,18 @@ package net.sf.jaer2.devices.config;
 
 import java.util.EnumSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.Numbers;
-import net.sf.jaer2.util.Numbers.NumberFormat;
-import net.sf.jaer2.util.Numbers.NumberOptions;
-import net.sf.jaer2.util.SSHSNode;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.Numbers;
+import net.sf.jaer.jaerfx2.Numbers.NumberFormat;
+import net.sf.jaer.jaerfx2.Numbers.NumberOptions;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public abstract class ConfigBase {
 	public static interface Address {
