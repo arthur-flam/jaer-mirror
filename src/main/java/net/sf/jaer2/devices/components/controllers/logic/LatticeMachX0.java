@@ -1,6 +1,6 @@
 package net.sf.jaer2.devices.components.controllers.logic;
 
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 
 public class LatticeMachX0 extends Logic {

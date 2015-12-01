@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.scene.control.ComboBox;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.SSHSNode;
 import net.sf.jaer2.devices.config.ConfigBase;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.SSHSAttribute;
-import net.sf.jaer2.util.SSHSNode;
 
 public class Mux extends ConfigBase {
 	public static final class MuxChannel {
@@ -40,23 +39,21 @@ public class Mux extends ConfigBase {
 	}
 
 	private final List<MuxChannel> channels = new ArrayList<>();
-	private final SSHSAttribute<MuxChannel> configAttr;
 
 	public Mux(final String name, final String description, final SSHSNode configNode, final int numBits) {
 		super(name, description, configNode, numBits);
-
-		configAttr = configNode.getAttribute(name, MuxChannel.class);
 
 		// By default, no channel is selected.
 		setChannel(null);
 	}
 
 	public MuxChannel getChannel() {
-		return configAttr.getValue();
+		// TODO: rethink this.
+		return null;
 	}
 
 	public void setChannel(final MuxChannel chan) {
-		configAttr.setValue(chan);
+		// TODO: rethink this.
 	}
 
 	public void put(final int chan, final String name) {
@@ -87,8 +84,7 @@ public class Mux extends ConfigBase {
 
 		channelBox.valueProperty().addListener((valueRef, oldValue, newValue) -> setChannel(newValue));
 
-		configAttr.addListener(
-			(node, userData, event, oldValue, newValue) -> channelBox.valueProperty().setValue(newValue), null);
+		// TODO: rethink this.
 	}
 
 	@Override

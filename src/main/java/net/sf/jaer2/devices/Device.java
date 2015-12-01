@@ -14,9 +14,9 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
 import net.sf.jaer2.devices.components.Component;
 import net.sf.jaer2.eventio.translators.Translator;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.SSHS;
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.SSHS;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public abstract class Device {
 	private final Map<String, Component> componentsMap = new LinkedHashMap<>();

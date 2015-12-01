@@ -2,15 +2,16 @@ package net.sf.jaer2.devices.config;
 
 import java.util.EnumSet;
 
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.Numbers.NumberFormat;
-import net.sf.jaer2.util.Numbers.NumberOptions;
-import net.sf.jaer2.util.SSHSAttribute;
-import net.sf.jaer2.util.SSHSNode;
+import javafx.beans.property.IntegerProperty;
+import net.sf.jaer.jaerfx2.BoundedProperties;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.Numbers.NumberFormat;
+import net.sf.jaer.jaerfx2.Numbers.NumberOptions;
+import net.sf.jaer.jaerfx2.SSHS.SSHSType;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public final class ConfigInt extends ConfigBase {
 	private final int address;
-	private final SSHSAttribute<Integer> configAttr;
 
 	public ConfigInt(final String name, final String description, final SSHSNode configNode, final int defaultValue) {
 		this(name, description, configNode, null, defaultValue);
@@ -21,23 +22,20 @@ public final class ConfigInt extends ConfigBase {
 		this(name, description, configNode, address, defaultValue, Integer.SIZE);
 	}
 
-	public ConfigInt(final String name, final String description, final SSHSNode configNode, final int defaultValue,
-		final int numBits) {
+	public ConfigInt(final String name, final String description, final SSHSNode configNode, final int defaultValue, final int numBits) {
 		this(name, description, configNode, null, defaultValue, numBits);
 	}
 
-	public ConfigInt(final String name, final String description, final SSHSNode configNode, final Address address,
-		final int defaultValue, final int numBits) {
+	public ConfigInt(final String name, final String description, final SSHSNode configNode, final Address address, final int defaultValue,
+		final int numBits) {
 		super(name, description, configNode, numBits);
 
 		if (numBits < 2) {
-			throw new IllegalArgumentException(
-				"Invalid numBits value, must be at least 2. Use ConfigBit for 1 bit quantities.");
+			throw new IllegalArgumentException("Invalid numBits value, must be at least 2. Use ConfigBit for 1 bit quantities.");
 		}
 
 		if (numBits > 32) {
-			throw new IllegalArgumentException(
-				"Invalid numBits value, must be at most 32. Use ConfigLong for larger quantities.");
+			throw new IllegalArgumentException("Invalid numBits value, must be at most 32. Use ConfigLong for larger quantities.");
 		}
 
 		if (address != null) {
@@ -51,16 +49,15 @@ public final class ConfigInt extends ConfigBase {
 			this.address = -1;
 		}
 
-		configAttr = configNode.getAttribute(name, Integer.class);
 		setValue(defaultValue);
 	}
 
 	public int getValue() {
-		return configAttr.getValue();
+		return getConfigNode().getInt(getName());
 	}
 
 	public void setValue(final int val) {
-		configAttr.setValue(val);
+		getConfigNode().putInt(getName(), val);
 	}
 
 	@Override
@@ -81,12 +78,22 @@ public final class ConfigInt extends ConfigBase {
 	protected void buildConfigGUI() {
 		super.buildConfigGUI();
 
-		GUISupport.addTextNumberField(rootConfigLayout, configAttr, 10, (int) getMinBitValue(), (int) getMaxBitValue(),
-			NumberFormat.DECIMAL, EnumSet.of(NumberOptions.UNSIGNED), null);
+		final IntegerProperty intProp = new BoundedProperties.BoundedIntegerProperty(getValue(), (int) getMinBitValue(),
+			(int) getMaxBitValue());
 
-		GUISupport.addTextNumberField(rootConfigLayout, configAttr, getNumBits(), (int) getMinBitValue(),
-			(int) getMaxBitValue(), NumberFormat.BINARY,
-			EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.LEFT_PADDING, NumberOptions.ZERO_PADDING), null);
+		GUISupport.addTextNumberField(rootConfigLayout, intProp, 10, (int) getMinBitValue(), (int) getMaxBitValue(), NumberFormat.DECIMAL,
+			EnumSet.of(NumberOptions.UNSIGNED), null);
+
+		GUISupport.addTextNumberField(rootConfigLayout, intProp, getNumBits(), (int) getMinBitValue(), (int) getMaxBitValue(),
+			NumberFormat.BINARY, EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.LEFT_PADDING, NumberOptions.ZERO_PADDING), null);
+
+		intProp.addListener((valueRef, oldValue, newValue) -> setValue(newValue.intValue()));
+
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.INT) && changeKey.equals(getName())) {
+				intProp.set(changeValue.getInt());
+			}
+		});
 	}
 
 	@Override

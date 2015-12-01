@@ -11,14 +11,14 @@ import java.util.concurrent.BlockingQueue;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.ComboBox;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.Reflections;
 import net.sf.jaer2.eventio.eventpackets.EventPacketContainer;
 import net.sf.jaer2.eventio.eventpackets.raw.RawEventPacket;
 import net.sf.jaer2.eventio.events.Event;
 import net.sf.jaer2.eventio.events.raw.RawEvent;
 import net.sf.jaer2.eventio.sources.Source;
 import net.sf.jaer2.eventio.translators.Translator;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.Reflections;
 
 public final class InputProcessor extends Processor {
 	private final BlockingQueue<RawEventPacket> inputQueue = new ArrayBlockingQueue<>(32);
@@ -154,7 +154,7 @@ public final class InputProcessor extends Processor {
 
 		// Create Translator type chooser box.
 		final ComboBox<Class<? extends Translator>> translatorTypeChooser = GUISupport.addComboBox(null,
-			Reflections.translatorTypes, 0);
+			Processor.translatorTypes, 0);
 		GUISupport
 			.addLabelWithControlsHorizontal(
 				rootConfigLayoutChildren,
@@ -185,7 +185,7 @@ public final class InputProcessor extends Processor {
 
 		// Create Source type chooser box.
 		final ComboBox<Class<? extends Source>> sourceTypeChooser = GUISupport.addComboBox(null,
-			Reflections.sourceTypes, -1);
+			Processor.sourceTypes, -1);
 		GUISupport.addLabelWithControlsHorizontal(rootConfigLayoutChildren, "Source:",
 			"Select the input Source you want to use.", sourceTypeChooser);
 

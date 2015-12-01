@@ -1,6 +1,6 @@
 package net.sf.jaer2.devices.config.pots;
 
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public class IPot extends Pot {
 	/** Fraction that bias current changes on increment or decrement. */
@@ -133,13 +133,6 @@ public class IPot extends Pot {
 	@Override
 	protected void buildConfigGUI() {
 		super.buildConfigGUI();
-
-		mainSlider.valueProperty().addListener(
-			(valueRef, oldValue, newValue) -> setBitValue((int) Math.round((newValue.doubleValue() / mainSlider
-				.getMax()) * getMaxBitValue())));
-
-		bitValue.addListener((node, userData, event, oldValue, newValue) -> mainSlider.setValue((int) Math
-			.round((newValue.doubleValue() / getMaxBitValue()) * mainSlider.getMax())), null);
 	}
 
 	@Override

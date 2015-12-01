@@ -2,26 +2,22 @@ package net.sf.jaer2.devices.config.pots;
 
 import java.util.EnumSet;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.Numbers;
+import net.sf.jaer.jaerfx2.Numbers.NumberFormat;
+import net.sf.jaer.jaerfx2.Numbers.NumberOptions;
+import net.sf.jaer.jaerfx2.SSHS;
+import net.sf.jaer.jaerfx2.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode.SSHSAttrListener.AttributeEvents;
 import net.sf.jaer2.devices.config.ConfigBase;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.Numbers;
-import net.sf.jaer2.util.Numbers.NumberFormat;
-import net.sf.jaer2.util.Numbers.NumberOptions;
-import net.sf.jaer2.util.SSHS;
-import net.sf.jaer2.util.SSHSAttribute;
-import net.sf.jaer2.util.SSHSNode;
-import net.sf.jaer2.util.SSHSNode.SSHSNodeListener.NodeEvents;
 
 public abstract class Pot extends ConfigBase {
-	/** Type of bias, NORMAL, CASCODE or REFERENCE. */
+	/** Type of bias, NORMAL or CASCODE. */
 	public static enum Type {
 		NORMAL("Normal"),
-		CASCODE("Cascode"),
-		REFERENCE("Reference");
+		CASCODE("Cascode");
 
 		private final String str;
 
@@ -35,11 +31,10 @@ public abstract class Pot extends ConfigBase {
 		}
 	}
 
-	/** Transistor type for bias, N, P or not available (na). */
+	/** Transistor type for bias, N or P. */
 	public static enum Sex {
 		N("N"),
-		P("P"),
-		na("N/A");
+		P("P");
 
 		private final String str;
 
@@ -53,12 +48,6 @@ public abstract class Pot extends ConfigBase {
 		}
 	}
 
-	protected final SSHSAttribute<Type> type;
-	protected final SSHSAttribute<Sex> sex;
-
-	/** The current value of the bias in bits. */
-	protected final SSHSAttribute<Integer> bitValue;
-
 	public Pot(final String name, final String description, final SSHSNode configNode, final Type type, final Sex sex) {
 		this(name, description, configNode, type, sex, 0, 24);
 	}
@@ -71,38 +60,35 @@ public abstract class Pot extends ConfigBase {
 		// that each bias appears isolated inside their own node.
 		this.configNode = SSHS.getRelativeNode(this.configNode, name + "/");
 
-		this.type = this.configNode.getAttribute("type", Type.class);
 		setType(type);
 
-		this.sex = this.configNode.getAttribute("sex", Sex.class);
 		setSex(sex);
 
-		bitValue = this.configNode.getAttribute("bitValue", Integer.class);
 		setBitValue(defaultValue);
 	}
 
 	public Type getType() {
-		return type.getValue();
+		return (getConfigNode().getString("type").equals(Type.NORMAL.toString())) ? (Type.NORMAL) : (Type.CASCODE);
 	}
 
 	public void setType(final Type t) {
-		type.setValue(t);
+		getConfigNode().putString("type", t.toString());
 	}
 
 	public Sex getSex() {
-		return sex.getValue();
+		return (getConfigNode().getString("sex").equals(Sex.N.toString())) ? (Sex.N) : (Sex.P);
 	}
 
 	public void setSex(final Sex s) {
-		sex.setValue(s);
+		getConfigNode().putString("sex", s.toString());
 	}
 
 	public int getBitValue() {
-		return bitValue.getValue();
+		return getConfigNode().getInt("value");
 	}
 
 	public void setBitValue(final int bitVal) {
-		bitValue.setValue(clip(bitVal));
+		getConfigNode().putInt("value", clip(bitVal));
 	}
 
 	private int clip(final int in) {
@@ -148,9 +134,10 @@ public abstract class Pot extends ConfigBase {
 	}
 
 	public String getBitValueAsString() {
-		return Numbers.integerToString(getBitValue(), NumberFormat.BINARY,
-			EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.ZERO_PADDING, NumberOptions.LEFT_PADDING)).substring(
-			Integer.SIZE - getBitValueBits(), Integer.SIZE);
+		return Numbers
+			.integerToString(getBitValue(), NumberFormat.BINARY,
+				EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.ZERO_PADDING, NumberOptions.LEFT_PADDING))
+			.substring(Integer.SIZE - getBitValueBits(), Integer.SIZE);
 	}
 
 	/**
@@ -177,48 +164,40 @@ public abstract class Pot extends ConfigBase {
 		return getBitValue();
 	}
 
-	protected Slider mainSlider;
-
 	@Override
 	protected void buildConfigGUI() {
 		super.buildConfigGUI();
 
-		GUISupport.addLabel(rootConfigLayout, getType().toString(), null, null, null);
+		GUISupport.addLabel(rootConfigLayout, getType().toString(), null);
 
-		GUISupport.addLabel(rootConfigLayout, getSex().toString(), null, null, null);
+		GUISupport.addLabel(rootConfigLayout, getSex().toString(), null);
 
-		GUISupport.addTextNumberField(rootConfigLayout, bitValue, 10, (int) getMinBitValue(), (int) getMaxBitValue(),
-			NumberFormat.DECIMAL, EnumSet.of(NumberOptions.UNSIGNED), null);
+		final IntegerProperty intProp = GUISupport.addTextNumberFieldWithSlider(rootConfigLayout, getBitValue(), (int) getMinBitValue(),
+			(int) getMaxBitValue());
 
-		GUISupport.addTextNumberField(rootConfigLayout, bitValue, getBitValueBits(), (int) getMinBitValue(),
-			(int) getMaxBitValue(), NumberFormat.BINARY,
-			EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.LEFT_PADDING, NumberOptions.ZERO_PADDING), null);
-
-		final long minBitValueSlider = getMinBitValue();
-		final long maxBitValueSlider = (getMaxBitValue() < 4095) ? (getMaxBitValue()) : (4095);
-
-		mainSlider = GUISupport.addSlider(rootConfigLayout, minBitValueSlider, maxBitValueSlider,
-			Math.round(((double) getBitValue() / getMaxBitValue()) * maxBitValueSlider), 10);
-		HBox.setHgrow(mainSlider, Priority.ALWAYS);
+		GUISupport.addTextNumberField(rootConfigLayout, intProp, getBitValueBits(), (int) getMinBitValue(), (int) getMaxBitValue(),
+			NumberFormat.BINARY, EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.LEFT_PADDING, NumberOptions.ZERO_PADDING), null);
 
 		final Label binaryRep = GUISupport.addLabel(rootConfigLayout, getBinaryRepresentationAsString(),
-			"Binary data to be sent to the device.", null, null);
+			"Binary data to be sent to the device.");
+
+		intProp.addListener((valueRef, oldValue, newValue) -> setBitValue(newValue.intValue()));
 
 		// Add listener directly to the node, so that any change to a
 		// subordinate setting results in the update of the shift register
 		// display value.
-		configNode.addNodeListener((node, userData, event, key) -> {
-			if (event == NodeEvents.ATTRIBUTE_MODIFIED) {
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if (event == AttributeEvents.ATTRIBUTE_MODIFIED) {
 				// On any subordinate attribute update, refresh the
 				// displayed value.
-			binaryRep.setText(getBinaryRepresentationAsString());
-		}
-	}, null);
+				binaryRep.setText(getBinaryRepresentationAsString());
+			}
+		});
 	}
 
 	@Override
 	public String toString() {
-		return String.format("%s, Type=%s, Sex=%s, bitValue=%d", super.toString(), getType().toString(), getSex()
-			.toString(), getBitValue());
+		return String.format("%s, Type=%s, Sex=%s, bitValue=%d", super.toString(), getType().toString(), getSex().toString(),
+			getBitValue());
 	}
 }

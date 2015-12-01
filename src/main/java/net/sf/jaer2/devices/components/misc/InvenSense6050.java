@@ -1,7 +1,7 @@
 package net.sf.jaer2.devices.components.misc;
 
 import net.sf.jaer2.devices.components.Component;
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public class InvenSense6050 extends Component {
 	public InvenSense6050(final SSHSNode componentConfigNode, final int i2cAddress) {

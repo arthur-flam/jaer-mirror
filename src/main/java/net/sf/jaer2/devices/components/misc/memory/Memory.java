@@ -9,19 +9,18 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.List;
 
+import com.google.common.collect.ImmutableList;
+
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import net.sf.jaer.jaerfx2.Files;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.SSHSNode;
 import net.sf.jaer2.devices.components.Component;
-import net.sf.jaer2.util.Files;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.PairRO;
-import net.sf.jaer2.util.SSHSNode;
-
-import com.google.common.collect.ImmutableList;
 
 public abstract class Memory extends Component {
 	private static final List<String> binaryExtensions = ImmutableList.of("*.bix", "*.iic", "*.hex", "*.img");
@@ -57,8 +56,7 @@ public abstract class Memory extends Component {
 		final HBox fileBox = new HBox(10);
 		rootConfigLayout.getChildren().add(fileBox);
 
-		GUISupport.addLabel(fileBox, "Select firmware file",
-			"Select a compatible firmware file to upload to device ROM.", null, null);
+		GUISupport.addLabel(fileBox, "Select firmware file", "Select a compatible firmware file to upload to device ROM.", null, null);
 
 		final TextField firmwareFileField = GUISupport.addTextField(fileBox, null, null);
 
@@ -74,8 +72,7 @@ public abstract class Memory extends Component {
 				// field background red.
 				final File loadFirmware = new File(newVal);
 
-				if (!Files.checkReadPermissions(loadFirmware)
-					|| !Files.checkExtensions(loadFirmware, Memory.binaryExtensions)) {
+				if (!Files.checkReadPermissions(loadFirmware) || !Files.checkExtensions(loadFirmware, Memory.binaryExtensions)) {
 					firmwareFileField.setStyle("-fx-background-color: #FF5757");
 					return;
 				}
@@ -88,8 +85,7 @@ public abstract class Memory extends Component {
 		GUISupport.addButtonWithMouseClickedHandler(fileBox, "Select file", true, null, new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(@SuppressWarnings("unused") final MouseEvent mouse) {
-				final File loadFirmware = GUISupport.showDialogLoadFile(ImmutableList.of(PairRO.of("Binary",
-					Memory.binaryExtensions)), null);
+				final File loadFirmware = GUISupport.showDialogLoadFile("Binary", Memory.binaryExtensions, null);
 
 				if (loadFirmware == null) {
 					return;

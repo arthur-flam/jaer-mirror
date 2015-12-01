@@ -9,8 +9,8 @@ import net.sf.jaer2.devices.config.ConfigBase;
 import net.sf.jaer2.devices.config.ConfigBase.Address;
 import net.sf.jaer2.devices.config.ConfigBit;
 import net.sf.jaer2.devices.config.ConfigInt;
-import net.sf.jaer2.util.SSHSNode;
-import net.sf.jaer2.util.TypedMap;
+import net.sf.jaer.jaerfx2.SSHSNode;
+import net.sf.jaer.jaerfx2.TypedMap;
 
 public class FX3 extends Controller {
 	public static enum GPIOs implements Address {

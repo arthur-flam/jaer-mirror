@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import net.sf.jaer2.devices.components.controllers.Controller.Command;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.SSHSNode;
-import net.sf.jaer2.util.TypedMap;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.SSHSNode;
+import net.sf.jaer.jaerfx2.TypedMap;
 
 import org.usb4java.BufferUtils;
 

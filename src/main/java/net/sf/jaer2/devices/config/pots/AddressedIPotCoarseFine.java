@@ -9,12 +9,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.Numbers.NumberFormat;
-import net.sf.jaer2.util.Numbers.NumberOptions;
-import net.sf.jaer2.util.SSHSAttribute;
-import net.sf.jaer2.util.SSHSNode;
-import net.sf.jaer2.util.SSHSNode.SSHSNodeListener.NodeEvents;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.Numbers.NumberFormat;
+import net.sf.jaer.jaerfx2.Numbers.NumberOptions;
+import net.sf.jaer.jaerfx2.SSHSNode;
+import net.sf.jaer.jaerfx2.SSHSNode.SSHSNodeListener.NodeEvents;
 
 public class AddressedIPotCoarseFine extends AddressedIPot {
 	/**

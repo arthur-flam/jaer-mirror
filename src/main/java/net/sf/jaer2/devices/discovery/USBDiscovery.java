@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentMap;
 
 import javafx.collections.ListChangeListener;
 import net.sf.jaer2.devices.USBDevice;
-import net.sf.jaer2.util.Reflections;
-import net.sf.jaer2.util.TripleRO;
+import net.sf.jaer.jaerfx2.Reflections;
+import net.sf.jaer.jaerfx2.TripleRO;
 
 import org.usb4java.Device;
 import org.usb4java.DeviceDescriptor;

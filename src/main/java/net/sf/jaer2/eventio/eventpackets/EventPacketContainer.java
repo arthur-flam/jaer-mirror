@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
+
+import net.sf.jaer.jaerfx2.PairRO;
 import net.sf.jaer2.eventio.events.Event;
 import net.sf.jaer2.eventio.processors.Processor;
-import net.sf.jaer2.util.PairRO;
-import net.sf.jaer2.util.PredicateIterator;
-
-import com.google.common.collect.Iterators;
 
 public final class EventPacketContainer implements Iterable<Event> {
 	// Lookup map: a Pair consisting of the Event type and the Event source
@@ -292,39 +292,39 @@ public final class EventPacketContainer implements Iterable<Event> {
 
 	@Override
 	public Iterator<Event> iterator() {
-		return new PredicateIterator<Event>(iteratorFull()) {
+		return Iterators.filter(iteratorFull(), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return element.isValid();
 			}
-		};
+		});
 	}
 
 	public Iterator<Event> iteratorType(final Class<? extends Event> type) {
-		return new PredicateIterator<Event>(iteratorFullType(type)) {
+		return Iterators.filter(iteratorFullType(type), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return element.isValid();
 			}
-		};
+		});
 	}
 
 	public Iterator<Event> iteratorSource(final int source) {
-		return new PredicateIterator<Event>(iteratorFullSource(source)) {
+		return Iterators.filter(iteratorFullSource(source), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return element.isValid();
 			}
-		};
+		});
 	}
 
 	public Iterator<Event> iteratorTypeSource(final Class<? extends Event> type, final int source) {
-		return new PredicateIterator<Event>(iteratorFullTypeSource(type, source)) {
+		return Iterators.filter(iteratorFullTypeSource(type, source), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return element.isValid();
 			}
-		};
+		});
 	}
 
 	public Iterator<Event> iteratorFull() {
@@ -378,26 +378,25 @@ public final class EventPacketContainer implements Iterable<Event> {
 			throw new UnsupportedOperationException("EventPacketContainer doesn't support global time-ordering.");
 		}
 
-		return new PredicateIterator<Event>(iteratorTimeOrderFull()) {
+		return Iterators.filter(iteratorTimeOrderFull(), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return element.isValid();
 			}
-		};
+		});
 	}
 
-	public Iterator<Event> iteratorTimeOrderType(final Class<? extends Event> type)
-		throws UnsupportedOperationException {
+	public Iterator<Event> iteratorTimeOrderType(final Class<? extends Event> type) throws UnsupportedOperationException {
 		if (!timeOrderingEnforced) {
 			throw new UnsupportedOperationException("EventPacketContainer doesn't support global time-ordering.");
 		}
 
-		return new PredicateIterator<Event>(iteratorTimeOrderFull()) {
+		return Iterators.filter(iteratorTimeOrderFull(), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return (element.isValid() && element.getEventType().equals(type));
 			}
-		};
+		});
 	}
 
 	public Iterator<Event> iteratorTimeOrderSource(final int source) {
@@ -405,12 +404,12 @@ public final class EventPacketContainer implements Iterable<Event> {
 			throw new UnsupportedOperationException("EventPacketContainer doesn't support global time-ordering.");
 		}
 
-		return new PredicateIterator<Event>(iteratorTimeOrderFull()) {
+		return Iterators.filter(iteratorTimeOrderFull(), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return (element.isValid() && (element.getSourceID() == source));
 			}
-		};
+		});
 	}
 
 	public Iterator<Event> iteratorTimeOrderTypeSource(final Class<? extends Event> type, final int source)
@@ -438,18 +437,17 @@ public final class EventPacketContainer implements Iterable<Event> {
 		return eventsTimeOrdered.iterator();
 	}
 
-	public Iterator<Event> iteratorTimeOrderFullType(final Class<? extends Event> type)
-		throws UnsupportedOperationException {
+	public Iterator<Event> iteratorTimeOrderFullType(final Class<? extends Event> type) throws UnsupportedOperationException {
 		if (!timeOrderingEnforced) {
 			throw new UnsupportedOperationException("EventPacketContainer doesn't support global time-ordering.");
 		}
 
-		return new PredicateIterator<Event>(iteratorTimeOrderFull()) {
+		return Iterators.filter(iteratorTimeOrderFull(), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return (element.getEventType().equals(type));
 			}
-		};
+		});
 	}
 
 	public Iterator<Event> iteratorTimeOrderFullSource(final int source) {
@@ -457,12 +455,12 @@ public final class EventPacketContainer implements Iterable<Event> {
 			throw new UnsupportedOperationException("EventPacketContainer doesn't support global time-ordering.");
 		}
 
-		return new PredicateIterator<Event>(iteratorTimeOrderFull()) {
+		return Iterators.filter(iteratorTimeOrderFull(), new Predicate<Event>() {
 			@Override
-			public boolean verifyPredicate(final Event element) {
+			public boolean apply(Event element) {
 				return (element.getSourceID() == source);
 			}
-		};
+		});
 	}
 
 	public Iterator<Event> iteratorTimeOrderFullTypeSource(final Class<? extends Event> type, final int source)

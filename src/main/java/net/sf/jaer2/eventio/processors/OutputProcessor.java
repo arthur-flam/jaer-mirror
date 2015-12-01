@@ -8,11 +8,11 @@ import java.util.concurrent.BlockingQueue;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.ComboBox;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.Reflections;
 import net.sf.jaer2.eventio.eventpackets.EventPacketContainer;
 import net.sf.jaer2.eventio.events.Event;
 import net.sf.jaer2.eventio.sinks.Sink;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.Reflections;
 
 public final class OutputProcessor extends Processor {
 	private final BlockingQueue<EventPacketContainer> outputQueue = new ArrayBlockingQueue<>(32);
@@ -111,7 +111,7 @@ public final class OutputProcessor extends Processor {
 		super.buildConfigGUI();
 
 		// Create Sink type chooser box.
-		final ComboBox<Class<? extends Sink>> sinkTypeChooser = GUISupport.addComboBox(null, Reflections.sinkTypes, -1);
+		final ComboBox<Class<? extends Sink>> sinkTypeChooser = GUISupport.addComboBox(null, Processor.sinkTypes, -1);
 		GUISupport.addLabelWithControlsHorizontal(rootConfigLayoutChildren, "Sink:",
 			"Select the output Sink you want to use.", sinkTypeChooser);
 

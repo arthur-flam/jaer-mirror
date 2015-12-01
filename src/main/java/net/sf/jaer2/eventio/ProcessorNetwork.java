@@ -7,7 +7,7 @@ import javafx.event.EventHandler;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import net.sf.jaer2.util.GUISupport;
+import net.sf.jaer.jaerfx2.GUISupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +65,7 @@ public final class ProcessorNetwork {
 			return;
 		}
 
-		GUISupport.runOnJavaFXThread(new Runnable() {
+		GUISupport.runTaskOnJavaFXThread(new Runnable() {
 			@Override
 			public void run() {
 				chain.setParentNetwork(ProcessorNetwork.this);
@@ -85,7 +85,7 @@ public final class ProcessorNetwork {
 	 *            chain to remove.
 	 */
 	public void removeChain(final ProcessorChain chain) {
-		GUISupport.runOnJavaFXThread(new Runnable() {
+		GUISupport.runTaskOnJavaFXThread(new Runnable() {
 			@Override
 			public void run() {
 				getGUI().getChildren().remove(chain.getGUI());

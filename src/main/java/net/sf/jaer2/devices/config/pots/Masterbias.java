@@ -3,8 +3,8 @@ package net.sf.jaer2.devices.config.pots;
 import javafx.scene.control.CheckBox;
 import javafx.scene.layout.VBox;
 import net.sf.jaer2.devices.config.ConfigBase;
-import net.sf.jaer2.util.GUISupport;
-import net.sf.jaer2.util.SSHSNode;
+import net.sf.jaer.jaerfx2.GUISupport;
+import net.sf.jaer.jaerfx2.SSHSNode;
 
 public class Masterbias extends ConfigBase {
 	/** the total multiplier for the n-type current mirror */

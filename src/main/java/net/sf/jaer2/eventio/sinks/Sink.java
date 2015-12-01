@@ -5,7 +5,7 @@ import java.util.List;
 
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import net.sf.jaer2.util.GUISupport;
+import net.sf.jaer.jaerfx2.GUISupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

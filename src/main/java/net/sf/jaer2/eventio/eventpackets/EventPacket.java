@@ -7,8 +7,10 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
+
 import net.sf.jaer2.eventio.events.Event;
-import net.sf.jaer2.util.PredicateIterator;
 
 public final class EventPacket<E extends Event> extends AbstractCollection<E> {
 	private static final int DEFAULT_EVENT_CAPACITY = 2048;
@@ -56,7 +58,7 @@ public final class EventPacket<E extends Event> extends AbstractCollection<E> {
 		timeOrderingEnforced = timeOrder;
 
 		// Use user-supplied capacity.
-		events = net.sf.jaer2.util.Arrays.newArrayFromType(type, capacity);
+		events = net.sf.jaer.jaerfx2.Arrays.newArrayFromType(type, capacity);
 	}
 
 	public Class<E> getEventType() {
@@ -163,7 +165,7 @@ public final class EventPacket<E extends Event> extends AbstractCollection<E> {
 			currentCapacity = arrayLength - lastEvent;
 		}
 
-		final E[] eventsNew = net.sf.jaer2.util.Arrays.newArrayFromType(eventType, arrayLength);
+		final E[] eventsNew = net.sf.jaer.jaerfx2.Arrays.newArrayFromType(eventType, arrayLength);
 
 		System.arraycopy(events, 0, eventsNew, 0, events.length);
 
@@ -471,12 +473,12 @@ public final class EventPacket<E extends Event> extends AbstractCollection<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return new PredicateIterator<E>(iteratorFull()) {
+		return Iterators.filter(iteratorFull(), new Predicate<E>() {
 			@Override
-			public boolean verifyPredicate(final E element) {
+			public boolean apply(E element) {
 				return element.isValid();
 			}
-		};
+		});
 	}
 
 	public Iterator<E> iteratorFull() {
