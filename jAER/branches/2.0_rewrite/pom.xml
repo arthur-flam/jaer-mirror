@@ -9,10 +9,11 @@
 
 	<name>jAER_2.0</name>
 	<url>https://sourceforge.net/p/jaer/</url>
+	<description>jAER software rewrite, using modern concepts and JavaFX.</description>
 
 	<organization>
-		<name>INI</name>
-		<url>https://www.ini.uzh.ch/</url>
+		<name>iniLabs</name>
+		<url>http://www.inilabs.com/</url>
 	</organization>
 
 	<issueManagement>
@@ -28,14 +29,14 @@
 
 	<repositories>
 		<repository>
-			<id>ailis</id>
-			<name>Ailis Maven Releases</name>
+			<id>usb4java</id>
+			<name>usb4java Maven Releases</name>
 			<url>http://nexus.ailis.de/content/groups/public/</url>
 		</repository>
 		<repository>
-			<id>in-project-repo</id>
-			<name>Internal Project Repo</name>
-			<url>file://${project.basedir}/jars/</url>
+			<id>jaer</id>
+			<name>jAER Maven Releases</name>
+			<url>https://svn.code.sf.net/p/jaer/code/utils/mvn-repo/</url>
 		</repository>
 	</repositories>
 
@@ -49,13 +50,13 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.12</version>
+			<version>1.7.13</version>
 		</dependency>
 		<dependency>
 			<!-- Specifies the logging back-end (java.util.logging). -->
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>
-			<version>1.7.12</version>
+			<version>1.7.13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -73,14 +74,14 @@
 			<version>18.0</version>
 		</dependency>
 		<dependency>
-			<groupId>org.bytedeco</groupId>
-			<artifactId>javacv</artifactId>
-			<version>0.11</version>
-		</dependency>
-		<dependency>
 			<groupId>org.controlsfx</groupId>
 			<artifactId>controlsfx</artifactId>
-			<version>8.40.9</version>
+			<version>8.40.10</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jaer</groupId>
+			<artifactId>jaerfx2</artifactId>
+			<version>0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.usb4java</groupId>
@@ -100,17 +101,12 @@
 		<dependency>
 			<groupId>org.jogamp.gluegen</groupId>
 			<artifactId>gluegen-rt-main</artifactId>
-			<version>2.3.1</version>
+			<version>2.3.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
 			<artifactId>jogl-all-main</artifactId>
-			<version>2.3.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.reflections</groupId>
-			<artifactId>reflections</artifactId>
-			<version>0.9.9-RC1</version>
+			<version>2.3.2</version>
 		</dependency>
 	</dependencies>
 
@@ -132,7 +128,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.5.3</version>
+				<version>2.6</version>
 				<configuration>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
