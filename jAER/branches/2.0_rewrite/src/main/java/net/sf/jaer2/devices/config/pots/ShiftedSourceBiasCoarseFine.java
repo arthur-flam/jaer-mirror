@@ -2,54 +2,63 @@ package net.sf.jaer2.devices.config.pots;
 
 import java.util.EnumSet;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
 import net.sf.jaer.jaerfx2.GUISupport;
-import net.sf.jaer.jaerfx2.Numbers.NumberFormat;
-import net.sf.jaer.jaerfx2.Numbers.NumberOptions;
+import net.sf.jaer.jaerfx2.SSHS.SSHSType;
 import net.sf.jaer.jaerfx2.SSHSNode;
-import net.sf.jaer.jaerfx2.SSHSNode.SSHSNodeListener.NodeEvents;
+import net.sf.jaer.jaerfx2.SSHSNode.SSHSAttrListener.AttributeEvents;
 
 public class ShiftedSourceBiasCoarseFine extends AddressedIPot {
 	public static enum OperatingMode {
-		ShiftedSource(0),
-		HiZ(1),
-		TiedToRail(2);
+		ShiftedSource(0, "ShiftedSource"),
+		HiZ(1, "HiZ"),
+		TiedToRail(2, "TiedToRail");
 
-		private final int bits;
 		public static final int mask = 0x0003;
+		private final int bits;
+		private final String str;
 
-		OperatingMode(final int b) {
+		OperatingMode(final int b, final String s) {
 			bits = b;
+			str = s;
 		}
 
 		public final int bits() {
 			return bits << Integer.numberOfTrailingZeros(OperatingMode.mask);
 		}
+
+		@Override
+		public final String toString() {
+			return str;
+		}
 	}
 
 	public static enum VoltageLevel {
-		SplitGate(0),
-		SingleDiode(1),
-		DoubleDiode(2);
+		SplitGate(0, "SplitGate"),
+		SingleDiode(1, "SingleDiode"),
+		DoubleDiode(2, "DoubleDiode");
 
-		private final int bits;
 		public static final int mask = 0x000C;
+		private final int bits;
+		private final String str;
 
-		VoltageLevel(final int b) {
+		VoltageLevel(final int b, final String s) {
 			bits = b;
+			str = s;
 		}
 
 		public final int bits() {
 			return bits << Integer.numberOfTrailingZeros(VoltageLevel.mask);
 		}
+
+		@Override
+		public final String toString() {
+			return str;
+		}
 	}
-
-	private final SSHSAttribute<OperatingMode> operatingMode;
-
-	private final SSHSAttribute<VoltageLevel> voltageLevel;
 
 	// 6 bits for level of shifted source
 	/** Bit mask for bias bits */
@@ -74,72 +83,33 @@ public class ShiftedSourceBiasCoarseFine extends AddressedIPot {
 	/** Maximum buffer bias value (all bits on) */
 	private static final int maxRegBitValue = (1 << ShiftedSourceBiasCoarseFine.numRegBiasBits) - 1;
 
-	/** The bit value of the buffer bias current */
-	private final SSHSAttribute<Byte> refBitValue;
-
-	/** The bit value of the buffer bias current */
-	private final SSHSAttribute<Byte> regBitValue;
-
-	public ShiftedSourceBiasCoarseFine(final String name, final String description, final SSHSNode configNode,
-		final int address, final Masterbias masterbias, final Type type, final Sex sex) {
+	public ShiftedSourceBiasCoarseFine(final String name, final String description, final SSHSNode configNode, final int address,
+		final Masterbias masterbias, final Type type, final Sex sex) {
 		this(name, description, configNode, address, masterbias, type, sex, ShiftedSourceBiasCoarseFine.maxRefBitValue,
 			ShiftedSourceBiasCoarseFine.maxRegBitValue, OperatingMode.ShiftedSource, VoltageLevel.SplitGate);
 	}
 
-	public ShiftedSourceBiasCoarseFine(final String name, final String description, final SSHSNode configNode,
-		final int address, final Masterbias masterbias, final Type type, final Sex sex, final int defaultRefBitValue,
-		final int defaultRegBitValue, final OperatingMode opMode, final VoltageLevel vLevel) {
+	public ShiftedSourceBiasCoarseFine(final String name, final String description, final SSHSNode configNode, final int address,
+		final Masterbias masterbias, final Type type, final Sex sex, final int defaultRefBitValue, final int defaultRegBitValue,
+		final OperatingMode opMode, final VoltageLevel vLevel) {
 		super(name, description, configNode, address, masterbias, type, sex, 0,
 			ShiftedSourceBiasCoarseFine.numRefBiasBits + ShiftedSourceBiasCoarseFine.numRegBiasBits + 4);
 		// Add four bits for: operatingMode (2) and voltageLevel (2).
-
-		refBitValue = this.configNode.getAttribute("refValue", Byte.class);
 		setRefBitValue(defaultRefBitValue);
 
-		regBitValue = this.configNode.getAttribute("regValue", Byte.class);
 		setRegBitValue(defaultRegBitValue);
 
-		setBitValueUpdateListeners();
-
-		// Developer check: the calculation should always be correct.
-		assert getBitValue() == ((defaultRegBitValue << ShiftedSourceBiasCoarseFine.numRefBiasBits) + defaultRefBitValue);
-
-		operatingMode = this.configNode.getAttribute("operatingMode", OperatingMode.class);
 		setOperatingMode(opMode);
 
-		voltageLevel = this.configNode.getAttribute("voltageLevel", VoltageLevel.class);
 		setVoltageLevel(vLevel);
 	}
 
-	private void setBitValueUpdateListeners() {
-		// Add listeners that mediate updates between the bitValue and its
-		// ref and reg parts automatically.
-		refBitValue
-			.addListener(
-				(node, userData, event, oldValue, newValue) -> setBitValue((getRegBitValue() << ShiftedSourceBiasCoarseFine.numRefBiasBits)
-					+ newValue.intValue()), null);
-
-		regBitValue
-			.addListener(
-				(node, userData, event, oldValue, newValue) -> setBitValue((newValue.intValue() << ShiftedSourceBiasCoarseFine.numRefBiasBits)
-					+ getRefBitValue()), null);
-
-		bitValue.addListener((node, userData, event, oldValue, newValue) -> {
-			setRefBitValue(newValue.intValue() & ShiftedSourceBiasCoarseFine.maxRefBitValue);
-			setRegBitValue(newValue.intValue() >>> ShiftedSourceBiasCoarseFine.numRefBiasBits);
-		}, null);
-
-		// Set the bitValue once manually to ensure previous settings of the
-		// ref/reg values are respected and propagated.
-		setBitValue((getRegBitValue() << ShiftedSourceBiasCoarseFine.numRefBiasBits) + getRefBitValue());
-	}
-
 	public int getRefBitValue() {
-		return refBitValue.getValue() & 0xFF;
+		return getConfigNode().getByte("ref");
 	}
 
 	public void setRefBitValue(final int ref) {
-		refBitValue.setValue((byte) ShiftedSourceBiasCoarseFine.clipRef(ref));
+		getConfigNode().putByte("ref", (byte) ShiftedSourceBiasCoarseFine.clipRef(ref));
 	}
 
 	/**
@@ -164,11 +134,11 @@ public class ShiftedSourceBiasCoarseFine extends AddressedIPot {
 	}
 
 	public int getRegBitValue() {
-		return regBitValue.getValue() & 0xFF;
+		return getConfigNode().getByte("reg");
 	}
 
 	public void setRegBitValue(final int reg) {
-		regBitValue.setValue((byte) ShiftedSourceBiasCoarseFine.clipReg(reg));
+		getConfigNode().putByte("reg", (byte) ShiftedSourceBiasCoarseFine.clipReg(reg));
 	}
 
 	/**
@@ -214,19 +184,43 @@ public class ShiftedSourceBiasCoarseFine extends AddressedIPot {
 	}
 
 	public OperatingMode getOperatingMode() {
-		return operatingMode.getValue();
+		switch (getConfigNode().getString("operatingMode")) {
+			case "ShiftedSource":
+				return OperatingMode.ShiftedSource;
+
+			case "HiZ":
+				return OperatingMode.HiZ;
+
+			case "TiedToRail":
+				return OperatingMode.TiedToRail;
+
+			default:
+				return null;
+		}
 	}
 
 	public void setOperatingMode(final OperatingMode opMode) {
-		operatingMode.setValue(opMode);
+		getConfigNode().putString("operatingMode", opMode.toString());
 	}
 
 	public VoltageLevel getVoltageLevel() {
-		return voltageLevel.getValue();
+		switch (getConfigNode().getString("voltageLevel")) {
+			case "SplitGate":
+				return VoltageLevel.SplitGate;
+
+			case "SingleDiode":
+				return VoltageLevel.SingleDiode;
+
+			case "DoubleDiode":
+				return VoltageLevel.DoubleDiode;
+
+			default:
+				return null;
+		}
 	}
 
 	public void setVoltageLevel(final VoltageLevel vLevel) {
-		voltageLevel.setValue(vLevel);
+		getConfigNode().putString("voltageLevel", vLevel.toString());
 	}
 
 	/**
@@ -315,46 +309,35 @@ public class ShiftedSourceBiasCoarseFine extends AddressedIPot {
 		l.setPrefWidth(80);
 		l.setAlignment(Pos.CENTER_RIGHT);
 
-		final ComboBox<OperatingMode> opModeBox = GUISupport.addComboBox(rootConfigLayout,
-			EnumSet.allOf(OperatingMode.class), getOperatingMode().ordinal());
+		final ComboBox<OperatingMode> opModeBox = GUISupport.addComboBox(rootConfigLayout, EnumSet.allOf(OperatingMode.class),
+			getOperatingMode().ordinal());
 
 		opModeBox.valueProperty().addListener((valueRef, oldValue, newValue) -> setOperatingMode(newValue));
 
-		operatingMode.addListener(
-			(node, userData, event, oldValue, newValue) -> opModeBox.valueProperty().setValue(newValue), null);
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.STRING) && changeKey.equals("operatingMode")) {
+				opModeBox.valueProperty().setValue(OperatingMode.ShiftedSource); // TODO: add others.
+			}
+		});
 
-		final ComboBox<VoltageLevel> vLevelBox = GUISupport.addComboBox(rootConfigLayout,
-			EnumSet.allOf(VoltageLevel.class), getVoltageLevel().ordinal());
+		final ComboBox<VoltageLevel> vLevelBox = GUISupport.addComboBox(rootConfigLayout, EnumSet.allOf(VoltageLevel.class),
+			getVoltageLevel().ordinal());
 
 		vLevelBox.valueProperty().addListener((valueRef, oldValue, newValue) -> setVoltageLevel(newValue));
 
-		voltageLevel.addListener(
-			(node, userData, event, oldValue, newValue) -> vLevelBox.valueProperty().setValue(newValue), null);
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.STRING) && changeKey.equals("voltageLevel")) {
+				vLevelBox.valueProperty().setValue(VoltageLevel.SplitGate); // TODO: add others.
+			}
+		});
 
-		GUISupport.addTextNumberField(rootConfigLayout, bitValue, 10, (int) getMinBitValue(), (int) getMaxBitValue(),
-			NumberFormat.DECIMAL, EnumSet.of(NumberOptions.UNSIGNED), null);
+		final IntegerProperty refProp = GUISupport.addTextNumberFieldWithSlider(rootConfigLayout, getRefBitValue(),
+			ShiftedSourceBiasCoarseFine.getMinRefBitValue(), ShiftedSourceBiasCoarseFine.getMaxRefBitValue());
+		refProp.addListener((valueRef, oldValue, newValue) -> setRefBitValue(newValue.intValue()));
 
-		GUISupport.addTextNumberField(rootConfigLayout, bitValue, getBitValueBits(), (int) getMinBitValue(),
-			(int) getMaxBitValue(), NumberFormat.BINARY,
-			EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.LEFT_PADDING, NumberOptions.ZERO_PADDING), null);
-
-		final Slider refSlider = GUISupport.addSlider(rootConfigLayout,
-			ShiftedSourceBiasCoarseFine.getMinRefBitValue(), ShiftedSourceBiasCoarseFine.getMaxRefBitValue(),
-			getRefBitValue(), 10);
-
-		refSlider.valueProperty().addListener((valueRef, oldValue, newValue) -> setRefBitValue(newValue.intValue()));
-
-		refBitValue.addListener(
-			(node, userData, event, oldValue, newValue) -> refSlider.setValue(newValue.doubleValue()), null);
-
-		final Slider regSlider = GUISupport.addSlider(rootConfigLayout,
-			ShiftedSourceBiasCoarseFine.getMinRegBitValue(), ShiftedSourceBiasCoarseFine.getMaxRegBitValue(),
-			getRegBitValue(), 10);
-
-		regSlider.valueProperty().addListener((valueRef, oldValue, newValue) -> setRegBitValue(newValue.intValue()));
-
-		regBitValue.addListener(
-			(node, userData, event, oldValue, newValue) -> regSlider.setValue(newValue.doubleValue()), null);
+		final IntegerProperty regProp = GUISupport.addTextNumberFieldWithSlider(rootConfigLayout, getRegBitValue(),
+			ShiftedSourceBiasCoarseFine.getMinRegBitValue(), ShiftedSourceBiasCoarseFine.getMaxRegBitValue());
+		regProp.addListener((valueRef, oldValue, newValue) -> setRegBitValue(newValue.intValue()));
 
 		final Label binaryRep = GUISupport.addLabel(rootConfigLayout, getBinaryRepresentationAsString(),
 			"Binary data to be sent to the device.", null, null);
@@ -362,13 +345,13 @@ public class ShiftedSourceBiasCoarseFine extends AddressedIPot {
 		// Add listener directly to the node, so that any change to a
 		// subordinate setting results in the update of the shift register
 		// display value.
-		configNode.addNodeListener((node, userData, event, key) -> {
-			if (event == NodeEvents.ATTRIBUTE_MODIFIED) {
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if (event == AttributeEvents.ATTRIBUTE_MODIFIED) {
 				// On any subordinate attribute update, refresh the
 				// displayed value.
-			binaryRep.setText(getBinaryRepresentationAsString());
-		}
-	}, null);
+				binaryRep.setText(getBinaryRepresentationAsString());
+			}
+		});
 	}
 
 	@Override
