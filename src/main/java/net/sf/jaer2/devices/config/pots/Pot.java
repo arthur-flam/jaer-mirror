@@ -178,10 +178,10 @@ public abstract class Pot extends ConfigBase {
 		GUISupport.addTextNumberField(rootConfigLayout, intProp, getBitValueBits(), (int) getMinBitValue(), (int) getMaxBitValue(),
 			NumberFormat.BINARY, EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.LEFT_PADDING, NumberOptions.ZERO_PADDING), null);
 
+		intProp.addListener((valueRef, oldValue, newValue) -> setBitValue(newValue.intValue()));
+
 		final Label binaryRep = GUISupport.addLabel(rootConfigLayout, getBinaryRepresentationAsString(),
 			"Binary data to be sent to the device.");
-
-		intProp.addListener((valueRef, oldValue, newValue) -> setBitValue(newValue.intValue()));
 
 		// Add listener directly to the node, so that any change to a
 		// subordinate setting results in the update of the shift register

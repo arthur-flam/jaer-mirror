@@ -81,7 +81,7 @@
 		<dependency>
 			<groupId>net.sf.jaer</groupId>
 			<artifactId>jaerfx2</artifactId>
-			<version>0.7</version>
+			<version>0.8</version>
 		</dependency>
 		<dependency>
 			<groupId>org.usb4java</groupId>

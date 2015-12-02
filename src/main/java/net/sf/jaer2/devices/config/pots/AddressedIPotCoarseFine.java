@@ -2,18 +2,15 @@ package net.sf.jaer2.devices.config.pots;
 
 import java.util.EnumSet;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import net.sf.jaer.jaerfx2.GUISupport;
-import net.sf.jaer.jaerfx2.Numbers.NumberFormat;
-import net.sf.jaer.jaerfx2.Numbers.NumberOptions;
+import net.sf.jaer.jaerfx2.SSHS.SSHSType;
 import net.sf.jaer.jaerfx2.SSHSNode;
-import net.sf.jaer.jaerfx2.SSHSNode.SSHSNodeListener.NodeEvents;
+import net.sf.jaer.jaerfx2.SSHSNode.SSHSAttrListener.AttributeEvents;
 
 public class AddressedIPotCoarseFine extends AddressedIPot {
 	/**
@@ -48,20 +45,6 @@ public class AddressedIPotCoarseFine extends AddressedIPot {
 	}
 
 	/**
-	 * This enum determines whether low-current mode is enabled. In low-current
-	 * mode, the bias uses
-	 * shifted n or p source regulated voltages.
-	 */
-	private final SSHSAttribute<CurrentLevel> currentLevel;
-
-	/**
-	 * If enabled=true the bias operates normally, if enabled=false,
-	 * then the bias is disabled by being weakly tied to the appropriate rail
-	 * (depending on bias sex, N or P).
-	 */
-	private final SSHSAttribute<Boolean> biasEnabled;
-
-	/**
 	 * Bit mask for flag bias enabled (normal operation) or disabled (tied
 	 * weakly to rail)
 	 */
@@ -94,81 +77,37 @@ public class AddressedIPotCoarseFine extends AddressedIPot {
 	/** Max bias bit value */
 	private static final int maxCoarseBitValue = (1 << AddressedIPotCoarseFine.numCoarseBits) - 1;
 
-	/**
-	 * the current fine value of the ipot in bits loaded into the shift register
-	 */
-	private final SSHSAttribute<Short> fineBitValue;
-
-	/**
-	 * the current coarse value of the ipot in bits loaded into the shift
-	 * register
-	 */
-	private final SSHSAttribute<Byte> coarseBitValue;
-
-	public AddressedIPotCoarseFine(final String name, final String description, final SSHSNode configNode,
-		final int address, final Masterbias masterbias, final Type type, final Sex sex) {
-		this(name, description, configNode, address, masterbias, type, sex,
-			AddressedIPotCoarseFine.maxCoarseBitValue / 2, AddressedIPotCoarseFine.maxFineBitValue,
-			CurrentLevel.Normal, true);
+	public AddressedIPotCoarseFine(final String name, final String description, final SSHSNode configNode, final int address,
+		final Masterbias masterbias, final Type type, final Sex sex) {
+		this(name, description, configNode, address, masterbias, type, sex, AddressedIPotCoarseFine.maxCoarseBitValue / 2,
+			AddressedIPotCoarseFine.maxFineBitValue, CurrentLevel.Normal, true);
 	}
 
-	public AddressedIPotCoarseFine(final String name, final String description, final SSHSNode configNode,
-		final int address, final Masterbias masterbias, final Type type, final Sex sex, final int defaultCoarseValue,
-		final int defaultFineValue, final CurrentLevel currLevel, final boolean biasEnabled) {
-		super(name, description, configNode, address, masterbias, type, sex, 0, AddressedIPotCoarseFine.numCoarseBits
-			+ AddressedIPotCoarseFine.numFineBits + 4);
+	public AddressedIPotCoarseFine(final String name, final String description, final SSHSNode configNode, final int address,
+		final Masterbias masterbias, final Type type, final Sex sex, final int defaultCoarseValue, final int defaultFineValue,
+		final CurrentLevel currLevel, final boolean biasEnabled) {
+		super(name, description, configNode, address, masterbias, type, sex, 0,
+			AddressedIPotCoarseFine.numCoarseBits + AddressedIPotCoarseFine.numFineBits + 4);
 		// Add four bits for: currentLevel, type, sex and biasEnabled.
 
-		coarseBitValue = this.configNode.getAttribute("coarseValue", Byte.class);
 		setCoarseBitValue(defaultCoarseValue);
 
-		fineBitValue = this.configNode.getAttribute("fineValue", Short.class);
 		setFineBitValue(defaultFineValue);
 
-		setBitValueUpdateListeners();
-
-		// Developer check: the calculation should always be correct.
-		assert getBitValue() == ((defaultCoarseValue << AddressedIPotCoarseFine.numFineBits) + defaultFineValue);
-
-		currentLevel = this.configNode.getAttribute("currentLevel", CurrentLevel.class);
 		setCurrentLevel(currLevel);
 
-		this.biasEnabled = this.configNode.getAttribute("enabled", Boolean.class);
 		setBiasEnabled(biasEnabled);
 	}
 
-	private void setBitValueUpdateListeners() {
-		// Add listeners that mediate updates between the bitValue and its
-		// coarse and fine parts automatically.
-		coarseBitValue
-			.addListener(
-				(node, userData, event, oldValue, newValue) -> setBitValue((newValue.intValue() << AddressedIPotCoarseFine.numFineBits)
-					+ getFineBitValue()), null);
-
-		fineBitValue
-			.addListener(
-				(node, userData, event, oldValue, newValue) -> setBitValue((getCoarseBitValue() << AddressedIPotCoarseFine.numFineBits)
-					+ newValue.intValue()), null);
-
-		bitValue.addListener((node, userData, event, oldValue, newValue) -> {
-			setCoarseBitValue(newValue.intValue() >>> AddressedIPotCoarseFine.numFineBits);
-			setFineBitValue(newValue.intValue() & AddressedIPotCoarseFine.maxFineBitValue);
-		}, null);
-
-		// Set the bitValue once manually to ensure previous settings of the
-		// coarse/fine values are respected and propagated.
-		setBitValue((getCoarseBitValue() << AddressedIPotCoarseFine.numFineBits) + getFineBitValue());
-	}
-
 	public int getFineBitValue() {
-		return fineBitValue.getValue() & 0xFFFF;
+		return getConfigNode().getShort("fine");
 	}
 
 	/**
 	 * Set the fine bias bit value.
 	 */
 	public void setFineBitValue(final int fine) {
-		fineBitValue.setValue((short) AddressedIPotCoarseFine.clipFine(fine));
+		getConfigNode().putShort("fine", (short) AddressedIPotCoarseFine.clipFine(fine));
 	}
 
 	/**
@@ -193,14 +132,14 @@ public class AddressedIPotCoarseFine extends AddressedIPot {
 	}
 
 	public int getCoarseBitValue() {
-		return coarseBitValue.getValue() & 0xFF;
+		return getConfigNode().getByte("coarse");
 	}
 
 	/**
 	 * Set the coarse bias bit value.
 	 */
 	public void setCoarseBitValue(final int coarse) {
-		coarseBitValue.setValue((byte) AddressedIPotCoarseFine.clipCoarse(coarse));
+		getConfigNode().putByte("coarse", (byte) AddressedIPotCoarseFine.clipCoarse(coarse));
 	}
 
 	/**
@@ -246,19 +185,20 @@ public class AddressedIPotCoarseFine extends AddressedIPot {
 	}
 
 	public boolean isBiasEnabled() {
-		return biasEnabled.getValue();
+		return getConfigNode().getBool("enabled");
 	}
 
 	public void setBiasEnabled(final boolean biasEnabled) {
-		this.biasEnabled.setValue(biasEnabled);
+		getConfigNode().putBool("enabled", biasEnabled);
 	}
 
 	public CurrentLevel getCurrentLevel() {
-		return currentLevel.getValue();
+		return (getConfigNode().getString("currentLevel").equals(CurrentLevel.Normal.toString())) ? (CurrentLevel.Normal)
+			: (CurrentLevel.Low);
 	}
 
 	public void setCurrentLevel(final CurrentLevel currentLevel) {
-		this.currentLevel.setValue(currentLevel);
+		getConfigNode().putString("currentLevel", currentLevel.toString());
 	}
 
 	public boolean isLowCurrentModeEnabled() {
@@ -300,8 +240,7 @@ public class AddressedIPotCoarseFine extends AddressedIPot {
 	public float setCoarseCurrent(final float current) {
 		// TODO: implement real MasterBias.
 		final double im = AddressedIPotCoarseFine.fixMasterBias;
-		setCoarseBitValue((int) Math.round(Math.log(current / im)
-			/ Math.log(AddressedIPotCoarseFine.RATIO_COARSE_CURRENT_STEP)));
+		setCoarseBitValue((int) Math.round(Math.log(current / im) / Math.log(AddressedIPotCoarseFine.RATIO_COARSE_CURRENT_STEP)));
 		return getCoarseCurrent();
 	}
 
@@ -349,7 +288,7 @@ public class AddressedIPotCoarseFine extends AddressedIPot {
 	@Override
 	protected void buildConfigGUI() {
 		// Add name label, with description as tool-tip.
-		final Label l = GUISupport.addLabel(rootConfigLayout, getName(), getDescription(), null, null);
+		final Label l = GUISupport.addLabel(rootConfigLayout, getName(), getDescription());
 
 		l.setPrefWidth(80);
 		l.setAlignment(Pos.CENTER_RIGHT);
@@ -358,57 +297,51 @@ public class AddressedIPotCoarseFine extends AddressedIPot {
 
 		enableBox.selectedProperty().addListener((valueRef, oldValue, newValue) -> setBiasEnabled(newValue));
 
-		biasEnabled.addListener(
-			(node, userData, event, oldValue, newValue) -> enableBox.selectedProperty().setValue(newValue), null);
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.BOOL) && changeKey.equals("enabled")) {
+				enableBox.selectedProperty().setValue(changeValue.getBoolean());
+			}
+		});
 
-		final ComboBox<CurrentLevel> currentBox = GUISupport.addComboBox(rootConfigLayout,
-			EnumSet.allOf(CurrentLevel.class), getCurrentLevel().ordinal());
+		final ComboBox<CurrentLevel> currentBox = GUISupport.addComboBox(rootConfigLayout, EnumSet.allOf(CurrentLevel.class),
+			getCurrentLevel().ordinal());
 
 		currentBox.valueProperty().addListener((valueRef, oldValue, newValue) -> setCurrentLevel(newValue));
 
-		currentLevel.addListener(
-			(node, userData, event, oldValue, newValue) -> currentBox.valueProperty().setValue(newValue), null);
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.STRING) && changeKey.equals("currentLevel")) {
+				currentBox.valueProperty()
+					.setValue((changeValue.equals(CurrentLevel.Normal.toString())) ? (CurrentLevel.Normal) : (CurrentLevel.Low));
+			}
+		});
 
-		final ComboBox<Type> typeBox = GUISupport.addComboBox(rootConfigLayout, EnumSet.allOf(Type.class), getType()
-			.ordinal());
+		final ComboBox<Type> typeBox = GUISupport.addComboBox(rootConfigLayout, EnumSet.allOf(Type.class), getType().ordinal());
 
 		typeBox.valueProperty().addListener((valueRef, oldValue, newValue) -> setType(newValue));
 
-		type.addListener((node, userData, event, oldValue, newValue) -> typeBox.valueProperty().setValue(newValue),
-			null);
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.STRING) && changeKey.equals("type")) {
+				typeBox.valueProperty().setValue((changeValue.equals(Type.NORMAL.toString())) ? (Type.NORMAL) : (Type.CASCODE));
+			}
+		});
 
-		final ComboBox<Sex> sexBox = GUISupport.addComboBox(rootConfigLayout, EnumSet.allOf(Sex.class), getSex()
-			.ordinal());
+		final ComboBox<Sex> sexBox = GUISupport.addComboBox(rootConfigLayout, EnumSet.allOf(Sex.class), getSex().ordinal());
 
 		sexBox.valueProperty().addListener((valueRef, oldValue, newValue) -> setSex(newValue));
 
-		sex.addListener((node, userData, event, oldValue, newValue) -> sexBox.valueProperty().setValue(newValue), null);
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if ((changeType == SSHSType.STRING) && changeKey.equals("sex")) {
+				sexBox.valueProperty().setValue((changeValue.equals(Sex.N.toString())) ? (Sex.N) : (Sex.P));
+			}
+		});
 
-		GUISupport.addTextNumberField(rootConfigLayout, bitValue, 10, (int) getMinBitValue(), (int) getMaxBitValue(),
-			NumberFormat.DECIMAL, EnumSet.of(NumberOptions.UNSIGNED), null);
+		final IntegerProperty coarseProp = GUISupport.addTextNumberFieldWithSlider(rootConfigLayout, getCoarseBitValue(),
+			AddressedIPotCoarseFine.getMinCoarseBitValue(), AddressedIPotCoarseFine.getMaxCoarseBitValue());
+		coarseProp.addListener((valueRef, oldValue, newValue) -> setCoarseBitValue(newValue.intValue()));
 
-		GUISupport.addTextNumberField(rootConfigLayout, bitValue, getBitValueBits(), (int) getMinBitValue(),
-			(int) getMaxBitValue(), NumberFormat.BINARY,
-			EnumSet.of(NumberOptions.UNSIGNED, NumberOptions.LEFT_PADDING, NumberOptions.ZERO_PADDING), null);
-
-		final Slider coarseSlider = GUISupport.addSlider(rootConfigLayout,
-			AddressedIPotCoarseFine.getMinCoarseBitValue(), AddressedIPotCoarseFine.getMaxCoarseBitValue(),
-			getCoarseBitValue(), 10);
-
-		coarseSlider.valueProperty().addListener(
-			(valueRef, oldValue, newValue) -> setCoarseBitValue(newValue.intValue()));
-
-		coarseBitValue.addListener(
-			(node, userData, event, oldValue, newValue) -> coarseSlider.setValue(newValue.doubleValue()), null);
-
-		final Slider fineSlider = GUISupport.addSlider(rootConfigLayout, AddressedIPotCoarseFine.getMinFineBitValue(),
-			AddressedIPotCoarseFine.getMaxFineBitValue(), getFineBitValue(), 10);
-		HBox.setHgrow(fineSlider, Priority.ALWAYS);
-
-		fineSlider.valueProperty().addListener((valueRef, oldValue, newValue) -> setFineBitValue(newValue.intValue()));
-
-		fineBitValue.addListener(
-			(node, userData, event, oldValue, newValue) -> fineSlider.setValue(newValue.doubleValue()), null);
+		final IntegerProperty fineProp = GUISupport.addTextNumberFieldWithSlider(rootConfigLayout, getFineBitValue(),
+			AddressedIPotCoarseFine.getMinFineBitValue(), AddressedIPotCoarseFine.getMaxFineBitValue());
+		fineProp.addListener((valueRef, oldValue, newValue) -> setFineBitValue(newValue.intValue()));
 
 		final Label binaryRep = GUISupport.addLabel(rootConfigLayout, getBinaryRepresentationAsString(),
 			"Binary data to be sent to the device.", null, null);
@@ -416,18 +349,18 @@ public class AddressedIPotCoarseFine extends AddressedIPot {
 		// Add listener directly to the node, so that any change to a
 		// subordinate setting results in the update of the shift register
 		// display value.
-		configNode.addNodeListener((node, userData, event, key) -> {
-			if (event == NodeEvents.ATTRIBUTE_MODIFIED) {
+		getConfigNode().addAttributeListener(null, (node, userData, event, changeKey, changeType, changeValue) -> {
+			if (event == AttributeEvents.ATTRIBUTE_MODIFIED) {
 				// On any subordinate attribute update, refresh the
 				// displayed value.
-			binaryRep.setText(getBinaryRepresentationAsString());
-		}
-	}, null);
+				binaryRep.setText(getBinaryRepresentationAsString());
+			}
+		});
 	}
 
 	@Override
 	public String toString() {
-		return String.format("%s, enabled=%b, lowCurrentMode=%b, coarseBitValue=%d, fineBitValue=%d", super.toString(),
-			isBiasEnabled(), isLowCurrentModeEnabled(), getCoarseBitValue(), getFineBitValue());
+		return String.format("%s, enabled=%b, lowCurrentMode=%b, coarseBitValue=%d, fineBitValue=%d", super.toString(), isBiasEnabled(),
+			isLowCurrentModeEnabled(), getCoarseBitValue(), getFineBitValue());
 	}
 }
