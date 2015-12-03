@@ -85,7 +85,7 @@ public abstract class Memory extends Component {
 		GUISupport.addButtonWithMouseClickedHandler(fileBox, "Select file", true, null, new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(@SuppressWarnings("unused") final MouseEvent mouse) {
-				final File loadFirmware = GUISupport.showDialogLoadFile("Binary", Memory.binaryExtensions, null);
+				final File loadFirmware = GUISupport.showDialogLoadFile("Binary", Memory.binaryExtensions);
 
 				if (loadFirmware == null) {
 					return;
