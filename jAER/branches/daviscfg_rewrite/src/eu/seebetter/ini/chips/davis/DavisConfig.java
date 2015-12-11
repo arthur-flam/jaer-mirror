@@ -14,7 +14,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -36,7 +35,6 @@ import ch.unizh.ini.jaer.chip.cochlea.CochleaAMS1c.Biasgen.PortBit;
 import ch.unizh.ini.jaer.chip.retina.DVSTweaks;
 import ch.unizh.ini.jaer.config.AbstractConfigValue;
 import ch.unizh.ini.jaer.config.mux.MuxControlPanel;
-import ch.unizh.ini.jaer.config.mux.OutputMap;
 import ch.unizh.ini.jaer.config.mux.OutputMux;
 import ch.unizh.ini.jaer.config.spi.SPIConfigBit;
 import ch.unizh.ini.jaer.config.spi.SPIConfigInt;
@@ -80,7 +78,7 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	final List<SPIConfigValue> dvsControl = new ArrayList<>();
 	final List<SPIConfigValue> apsControl = new ArrayList<>();
 	final List<SPIConfigValue> imuControl = new ArrayList<>();
-	final List<SPIConfigValue> usbControl = new ArrayList<>();
+	final List<SPIConfigValue> extInControl = new ArrayList<>();
 	final List<SPIConfigValue> chipControl = new ArrayList<>();
 
 	// All bias types.
@@ -157,6 +155,8 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 			false, chip.getPrefs()));
 		muxControl.add(new SPIConfigBit("DropExtInputOnTransferStall", "Drop External Input events when USB FIFO is full.",
 			CypressFX3.FPGA_MUX, (short) 7, true, chip.getPrefs()));
+		muxControl.add(new SPIConfigInt("EarlyPacketDelay", "Ensure a USB packet is committed at least every N x 125µs timesteps.",
+			CypressFX3.FPGA_USB, (short) 1, 13, 8, chip.getPrefs()));
 
 		for (final SPIConfigValue cfgVal : muxControl) {
 			cfgVal.addObserver(this);
@@ -164,6 +164,7 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		}
 
 		// DVS module
+		dvsControl.add(new SPIConfigBit("Run", "Enable DVS.", CypressFX3.FPGA_DVS, (short) 3, false, chip.getPrefs()));
 		dvsControl.add(new SPIConfigInt("AckDelayRow", "Delay Row AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 4, 5, 4,
 			chip.getPrefs()));
 		dvsControl.add(new SPIConfigInt("AckDelayColumn", "Delay Column AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 5, 5, 0,
@@ -190,48 +191,129 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		}
 
 		// APS module
-		apsControl.add(new SPIConfigBit("ResetRead", ".", CypressFX3.FPGA_APS, (short) 5, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigBit("WaitOnTransferStall", ".", CypressFX3.FPGA_APS, (short) 6, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigBit("GlobalShutter", ".", CypressFX3.FPGA_APS, (short) 8, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("StartColumn0", ".", CypressFX3.FPGA_APS, (short) 9, 10, 0, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("StartRow0", ".", CypressFX3.FPGA_APS, (short) 10, 10, 0, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("EndColumn0", ".", CypressFX3.FPGA_APS, (short) 11, 10, XX, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("EndRow0", ".", CypressFX3.FPGA_APS, (short) 12, 10, XX, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("Exposure", ".", CypressFX3.FPGA_APS, (short) 13, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("FrameDelay", ".", CypressFX3.FPGA_APS, (short) 14, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("ResetSettle", ".", CypressFX3.FPGA_APS, (short) 15, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("ColumnSettle", ".", CypressFX3.FPGA_APS, (short) 16, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("RowSettle", ".", CypressFX3.FPGA_APS, (short) 17, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("NullSettle", ".", CypressFX3.FPGA_APS, (short) 18, true, chip.getPrefs()));
+		apsControl.add(new SPIConfigBit("Run", "Enable APS.", CypressFX3.FPGA_APS, (short) 4, false, chip.getPrefs()));
+		apsControl.add(new SPIConfigBit("ResetRead", "Do the reset read in addition to the signal read.", CypressFX3.FPGA_APS, (short) 5,
+			true, chip.getPrefs()));
+		apsControl.add(new SPIConfigBit("WaitOnTransferStall",
+			"On event FIFO full, pause and wait for free space. This ensures no APS pixels are dropped.", CypressFX3.FPGA_APS, (short) 6,
+			true, chip.getPrefs()));
+		apsControl.add(new SPIConfigBit("GlobalShutter", "Enable global shutter versus rolling shutter.", CypressFX3.FPGA_APS, (short) 8,
+			true, chip.getPrefs()));
+		apsControl
+			.add(new SPIConfigInt("Exposure", "Set exposure time (in µs).", CypressFX3.FPGA_APS, (short) 13, 20, 4000, chip.getPrefs()));
+		apsControl.add(new SPIConfigInt("FrameDelay", "Set delay time between frames (in µs).", CypressFX3.FPGA_APS, (short) 14, 20, 1000,
+			chip.getPrefs()));
+		apsControl.add(
+			new SPIConfigInt("ResetSettle", "Set reset settle time (in cycles).", CypressFX3.FPGA_APS, (short) 15, 7, 10, chip.getPrefs()));
+		apsControl.add(new SPIConfigInt("ColumnSettle", "Set column settle time (in cycles).", CypressFX3.FPGA_APS, (short) 16, 7, 30,
+			chip.getPrefs()));
+		apsControl.add(
+			new SPIConfigInt("RowSettle", "Set row settle time (in cycles).", CypressFX3.FPGA_APS, (short) 17, 6, 10, chip.getPrefs()));
+		apsControl.add(
+			new SPIConfigInt("NullSettle", "Set null settle time (in cycles).", CypressFX3.FPGA_APS, (short) 18, 5, 3, chip.getPrefs()));
 
 		// TODO: new chips only.
-		apsControl.add(new SPIConfigBit("UseInternalADC", ".", CypressFX3.FPGA_APS, (short) 34, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigBit("SampleEnable", ".", CypressFX3.FPGA_APS, (short) 35, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("SampleSettle", ".", CypressFX3.FPGA_APS, (short) 36, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("RampReset", ".", CypressFX3.FPGA_APS, (short) 37, true, chip.getPrefs()));
-		apsControl.add(new SPIConfigBit("RampShortReset", ".", CypressFX3.FPGA_APS, (short) 38, true, chip.getPrefs()));
+		apsControl.add(new SPIConfigBit("UseInternalADC", "Use the on-chip ADC instead of the external TI ADC.", CypressFX3.FPGA_APS,
+			(short) 34, true, chip.getPrefs()));
+		apsControl
+			.add(new SPIConfigBit("SampleEnable", "Enable Sample&Hold circuitry.", CypressFX3.FPGA_APS, (short) 35, true, chip.getPrefs()));
+		apsControl.add(
+			new SPIConfigInt("SampleSettle", "Sample hold time (in cycles).", CypressFX3.FPGA_APS, (short) 36, 8, 30, chip.getPrefs()));
+		apsControl
+			.add(new SPIConfigInt("RampReset", "Ramp reset time (in cycles).", CypressFX3.FPGA_APS, (short) 37, 8, 10, chip.getPrefs()));
+		apsControl.add(new SPIConfigBit("RampShortReset", "Only go through half the ramp for reset read.", CypressFX3.FPGA_APS, (short) 38,
+			false, chip.getPrefs()));
 
 		for (final SPIConfigValue cfgVal : apsControl) {
 			cfgVal.addObserver(this);
 			allPreferencesList.add(cfgVal);
 		}
 
+		// IMU module
+		imuControl.add(new SPIConfigBit("Run", "Enable IMU.", CypressFX3.FPGA_IMU, (short) 0, false, chip.getPrefs()));
+		imuControl.add(
+			new SPIConfigBit("TempStandby", "Disable temperature measurement.", CypressFX3.FPGA_IMU, (short) 1, false, chip.getPrefs()));
+		// imuControl.add(new SPIConfigInt("AccelStandby", ".", CypressFX3.FPGA_IMU, (short) 2, 3, 0, chip.getPrefs()));
+		// imuControl.add(new SPIConfigInt("GyroStandby", ".", CypressFX3.FPGA_IMU, (short) 3, 3, 0, chip.getPrefs()));
+		imuControl.add(new SPIConfigBit("LPCycle", "Low-power cycle.", CypressFX3.FPGA_IMU, (short) 4, false, chip.getPrefs()));
+		imuControl.add(new SPIConfigInt("LPWakeup", "Low-power wakeup mode.", CypressFX3.FPGA_IMU, (short) 5, 2, 1, chip.getPrefs()));
+		imuControl.add(
+			new SPIConfigInt("SampleRateDivider", "Sample-rate divider value.", CypressFX3.FPGA_IMU, (short) 6, 8, 0, chip.getPrefs()));
+		imuControl.add(new SPIConfigInt("DigitalLowPassFilter", "Digital low-pass filter configuration.", CypressFX3.FPGA_IMU, (short) 7, 3,
+			1, chip.getPrefs()));
+		imuControl.add(new SPIConfigInt("AccelFullScale", "Accellerometer scale configuration.", CypressFX3.FPGA_IMU, (short) 8, 2, 1,
+			chip.getPrefs()));
+		imuControl.add(
+			new SPIConfigInt("GyroFullScale", "Gyroscope scale configuration.", CypressFX3.FPGA_IMU, (short) 9, 2, 1, chip.getPrefs()));
+
+		for (final SPIConfigValue cfgVal : imuControl) {
+			cfgVal.addObserver(this);
+			allPreferencesList.add(cfgVal);
+		}
+
+		// External Input module
+		extInControl
+			.add(new SPIConfigBit("RunDetector", "Enable signal detector.", CypressFX3.FPGA_EXTINPUT, (short) 0, false, chip.getPrefs()));
+		extInControl.add(new SPIConfigBit("DetectRisingEdges", "Emit special event if a rising edge is detected.", CypressFX3.FPGA_EXTINPUT,
+			(short) 1, false, chip.getPrefs()));
+		extInControl.add(new SPIConfigBit("DetectFallingEdges", "Emit special event if a falling edge is detected.",
+			CypressFX3.FPGA_EXTINPUT, (short) 2, false, chip.getPrefs()));
+		extInControl.add(new SPIConfigBit("DetectPulses", "Emit special event if a pulse is detected.", CypressFX3.FPGA_EXTINPUT, (short) 3,
+			true, chip.getPrefs()));
+		extInControl.add(new SPIConfigBit("DetectPulsePolarity", "Polarity of the pulse to be detected.", CypressFX3.FPGA_EXTINPUT,
+			(short) 4, true, chip.getPrefs()));
+		extInControl.add(new SPIConfigInt("DetectPulseLength", "Minimal length of the pulse to be detected.", CypressFX3.FPGA_EXTINPUT,
+			(short) 5, 27, 120, chip.getPrefs()));
+
+		// TODO: new boards only.
+		extInControl.add(new SPIConfigBit("RunGenerator", "Enable signal generator (PWM-like).", CypressFX3.FPGA_EXTINPUT, (short) 7, false,
+			chip.getPrefs()));
+		extInControl
+			.add(new SPIConfigBit("GenerateUseCustomSignal", "Use custom FPGA-internal signal, instead of PWM-like generator output.",
+				CypressFX3.FPGA_EXTINPUT, (short) 8, false, chip.getPrefs()));
+		extInControl.add(new SPIConfigBit("GeneratePulsePolarity", "Polarity of the generated pulse.", CypressFX3.FPGA_EXTINPUT, (short) 9,
+			false, chip.getPrefs()));
+		extInControl.add(new SPIConfigInt("GeneratePulseInterval", "Time interval between consecutive pulses.", CypressFX3.FPGA_EXTINPUT,
+			(short) 10, 27, 120, chip.getPrefs()));
+		extInControl.add(new SPIConfigInt("GeneratePulseLength", "Time length of a pulse.", CypressFX3.FPGA_EXTINPUT, (short) 11, 27, 60,
+			chip.getPrefs()));
+
+		for (final SPIConfigValue cfgVal : extInControl) {
+			cfgVal.addObserver(this);
+			allPreferencesList.add(cfgVal);
+		}
 
 		// Chip diagnostic chain
-		chipDiagChain.add(new SPIConfigInt("ChipResetCapConfigADM", "Reset cap configuration in ADM.", CypressFX3.FPGA_CHIPBIAS,
-			(short) 128, 2, 0, getPrefs()));
-		chipDiagChain.add(new SPIConfigInt("ChipDelayCapConfigADM", "Delay cap configuration in ADM.", CypressFX3.FPGA_CHIPBIAS,
-			(short) 129, 3, 0, getPrefs()));
-		chipDiagChain.add(new SPIConfigBit("ChipComparatorSelfOsc", "Comparator self-oscillation enable.", CypressFX3.FPGA_CHIPBIAS,
-			(short) 130, false, getPrefs()));
-		chipDiagChain
-			.add(new SPIConfigInt("ChipLNAGainConfig", "LNA gain configuration.", CypressFX3.FPGA_CHIPBIAS, (short) 131, 3, 0, getPrefs()));
-		chipDiagChain.add(new SPIConfigBit("ChipLNADoubleInputSelect", "LNA double or single input selection.", CypressFX3.FPGA_CHIPBIAS,
-			(short) 132, false, getPrefs()));
-		chipDiagChain.add(
-			new SPIConfigBit("ChipTestScannerBias", "Test scanner bias enable.", CypressFX3.FPGA_CHIPBIAS, (short) 133, false, getPrefs()));
+		chipControl.add(new SPIConfigBit("DigitalMux0", "Digital multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 128, true,
+			chip.getPrefs()));
+		chipControl.add(new SPIConfigBit("DigitalMux1", "Digital multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 129, true,
+			chip.getPrefs()));
+		chipControl.add(new SPIConfigBit("DigitalMux2", "Digital multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 130, true,
+			chip.getPrefs()));
+		chipControl.add(new SPIConfigBit("DigitalMux3", "Digital multiplexer 3 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 131, true,
+			chip.getPrefs()));
+		chipControl.add(
+			new SPIConfigBit("AnalogMux0", "Analog multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 132, true, chip.getPrefs()));
+		chipControl.add(
+			new SPIConfigBit("AnalogMux1", "Analog multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 133, true, chip.getPrefs()));
+		chipControl.add(
+			new SPIConfigBit("AnalogMux2", "Analog multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 134, true, chip.getPrefs()));
+		chipControl
+			.add(new SPIConfigBit("BiasMux0", "Bias multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 135, true, chip.getPrefs()));
 
-		for (final SPIConfigValue cfgVal : chipDiagChain) {
+		chipControl.add(new SPIConfigBit("ResetCalibNeuron", "Turn off the integrate and fire calibration neuron (bias generator).",
+			CypressFX3.FPGA_CHIPBIAS, (short) 136, true, chip.getPrefs()));
+		chipControl.add(new SPIConfigBit("TypeNCalibNeuron",
+			"Make the integrate and fire calibration neuron configured to measure N type biases; otherwise measures P-type currents.",
+			CypressFX3.FPGA_CHIPBIAS, (short) 137, true, chip.getPrefs()));
+		chipControl.add(new SPIConfigBit("ResetTestPixel", "Keep the text pixel in reset.", CypressFX3.FPGA_CHIPBIAS, (short) 138, true,
+			chip.getPrefs()));
+		chipControl.add(new SPIConfigBit("AERnArow", "Use nArow in the AER state machine.", CypressFX3.FPGA_CHIPBIAS, (short) 140, true,
+			chip.getPrefs()));
+		chipControl.add(new SPIConfigBit("UseAOut", "Turn the pads for the analog MUX outputs on.", CypressFX3.FPGA_CHIPBIAS, (short) 141,
+			true, chip.getPrefs()));
+
+		for (final SPIConfigValue cfgVal : chipControl) {
 			cfgVal.addObserver(this);
 			allPreferencesList.add(cfgVal);
 		}
@@ -241,7 +323,7 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		videoControl.addObserver(this);
 
 		// imuControl
-		imuControl = new ImuControl(this);
+		imuControlGUI = new ImuControl(this);
 
 		setBatchEditOccurring(true);
 		loadPreferences();
@@ -266,33 +348,6 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	private ShiftedSourceBiasCF ssn, ssp;
 	private JPanel configPanel;
 	private JTabbedPane configTabbedPane;
-
-	/*
-	 * IMU registers, defined in logic IMUStateMachine
-	 * constant IMUInitAddr0 : std_logic_vector(7 downto 0) := "01101011"; -- ADDR: (0x6b) IMU power management register
-	 * and clock selection
-	 * constant IMUInitAddr1 : std_logic_vector(7 downto 0) := "00011010"; -- ADDR: (0x1A) DLPF (digital low pass
-	 * filter)
-	 * constant IMUInitAddr2 : std_logic_vector(7 downto 0) := "00011001"; -- ADDR: (0x19) Sample rate divider
-	 * constant IMUInitAddr3 : std_logic_vector(7 downto 0) := "00011011"; -- ADDR: (0x1B) Gyro Configuration: Full
-	 * Scale Range / Sensitivity
-	 * constant IMUInitAddr4 : std_logic_vector(7 downto 0) := "00011100"; -- ADDR: (0x1C) Accel Configuration: Full
-	 * Scale Range / Sensitivity
-	 */
-	public CPLDByte miscControlBits = new CPLDByte(chip, 95, 88, 3, "miscControlBits",
-		"Bit0: IMU run (0=stop, 1=run). Bit1: Rolling shutter (0=global shutter, 1=rolling shutter). Bits2-7: unused ", (byte) 1);
-	// See Invensense MPU-6100 IMU datasheet RM-MPU-6100A.pdf
-	public CPLDByte imu0PowerMgmtClkRegConfig = new CPLDByte(chip, 103, 96, 255, "imu0_PWR_MGMT_1",
-		"1=Disable sleep, select x axis gyro as clock source", (byte) 1); // PWR_MGMT_1
-	public CPLDByte imu1DLPFConfig = new CPLDByte(chip, 111, 104, 255, "imu1_CONFIG",
-		"1=digital low pass filter DLPF: FS=1kHz, Gyro 188Hz, 1.9ms delay ", (byte) 1); // CONFIG
-	public CPLDByte imu2SamplerateDividerConfig = new CPLDByte(chip, 119, 112, 255, "imu2_SMPLRT_DIV",
-		"0=sample rate divider: 1 Khz sample rate when DLPF is enabled", (byte) 0); // SMPLRT_DIV
-	public CPLDByte imu3GyroConfig = new CPLDByte(chip, 127, 120, 255, "imu3_GYRO_CONFIG", "8=500 deg/s, 65.5 LSB per deg/s ", (byte) 8); // GYRO_CONFIG:
-	public CPLDByte imu4AccelConfig = new CPLDByte(chip, 135, 128, 255, "imu4_ACCEL_CONFIG",
-		"ACCEL_CONFIG: Bits 4:3 code AFS_SEL. 8=4g, 8192 LSB per g", (byte) 8); // ACCEL_CONFIG:
-	protected CPLDInt nullSettle = new CPLDInt(chip, 151, 136, (1 << 5) - 1, "nullSettle", "time to remain in NULL state between columns",
-		0);
 
 	protected int aeReaderFifoSize;
 	protected int aeReaderNumBuffers;
@@ -1291,383 +1346,192 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	 *            msb of first output byte
 	 * @return array of bytes to send
 	 */
-	public class DavisChipConfigChain extends ChipConfigChain {
 
-		// Config Bits
-		OnchipConfigBit resetCalibNeuron = new OnchipConfigBit(chip, "ResetCalibNeuron", 0,
-			"turns the bias generator integrate and fire calibration neuron off", true);
-		OnchipConfigBit typeNCalibNeuron = new OnchipConfigBit(chip, "TypeNCalibNeuron", 1,
-			"make the bias generator intgrate and fire calibration neuron configured to measure N type biases; otherwise measures P-type currents",
-			false);
-		OnchipConfigBit resetTestPixel = new OnchipConfigBit(chip, "ResetTestPixel", 2, "keeps the test pixel in reset", true);
-		OnchipConfigBit AERnArow = new OnchipConfigBit(chip, "AERnArow", 4, "use nArow in the AER state machine", false);
-		OnchipConfigBit useAOut = new OnchipConfigBit(chip, "UseAOut", 5, "turn the pads for the analog MUX outputs on", false);
-		OnchipConfigBit globalShutter = new OnchipConfigBit(chip, "GlobalShutter", 6,
-			"Use the global shutter or not (no effect on DAVIS240a cameras). ", false);
+	@Override
+	public String getBitString() {
+		// System.out.print("dig muxes ");
+		final String dMuxBits = getMuxBitString(dmuxes);
+		// System.out.print("config bits ");
+		final String configBitString = getConfigBitString();
+		// System.out.print("analog muxes ");
+		final String aMuxBits = getMuxBitString(amuxes);
+		// System.out.print("bias muxes ");
+		final String bMuxBits = getMuxBitString(bmuxes);
 
-		// Muxes
-		protected OutputMux[] amuxes;
-		protected OutputMux[] dmuxes;
-		protected OutputMux[] bmuxes;
+		final String chipConfigChainString = (dMuxBits + configBitString + aMuxBits + bMuxBits);
+		// System.out.println("On chip config chain: "+chipConfigChain);
 
-		public DavisChipConfigChain(final Chip chip) {
-			super(chip);
-			getHasPreferenceList().add(this);
+		return chipConfigChainString; // returns bytes padded at end
+	}
 
-			TOTAL_CONFIG_BITS = 24;
-
-			configBits = new OnchipConfigBit[TOTAL_CONFIG_BITS];
-			configBits[0] = resetCalibNeuron;
-			configBits[1] = typeNCalibNeuron;
-			configBits[2] = resetTestPixel;
-			configBits[3] = null; // HotPixelSuppression only for DAVIS240.
-			configBits[4] = AERnArow;
-			configBits[5] = useAOut;
-			configBits[6] = globalShutter;
-
-			for (final OnchipConfigBit b : configBits) {
-				if (b != null) {
-					b.addObserver(this);
-				}
-			}
-
-			amuxes = new OutputMux[3];
-			amuxes[0] = new AnalogOutputMux(1);
-			amuxes[1] = new AnalogOutputMux(2);
-			amuxes[2] = new AnalogOutputMux(3);
-
-			dmuxes = new OutputMux[4];
-			dmuxes[0] = new DigitalOutputMux(1);
-			dmuxes[1] = new DigitalOutputMux(2);
-			dmuxes[2] = new DigitalOutputMux(3);
-			dmuxes[3] = new DigitalOutputMux(4);
-
-			bmuxes = new OutputMux[1];
-			bmuxes[0] = new DigitalOutputMux(0);
-
-			muxes.addAll(Arrays.asList(bmuxes));
-			muxes.addAll(Arrays.asList(dmuxes)); // 4 digital muxes, first in list since at end of chain - bits must be
-			// sent first, before any biasgen bits
-			muxes.addAll(Arrays.asList(amuxes)); // finally send the 3 voltage muxes
-
-			for (final OutputMux m : muxes) {
-				m.addObserver(this);
-				m.setChip(chip);
-			}
-
-			bmuxes[0].setName("BiasOutMux");
-
-			bmuxes[0].put(0, "IFThrBn");
-			bmuxes[0].put(1, "AEPuYBp");
-			bmuxes[0].put(2, "AEPuXBp");
-			bmuxes[0].put(3, "LColTimeout");
-			bmuxes[0].put(4, "AEPdBn");
-			bmuxes[0].put(5, "RefrBp");
-			bmuxes[0].put(6, "PrSFBp");
-			bmuxes[0].put(7, "PrBp");
-			bmuxes[0].put(8, "PixInvBn");
-			bmuxes[0].put(9, "LocalBufBn");
-			bmuxes[0].put(10, "ApsROSFBn");
-			bmuxes[0].put(11, "DiffCasBnc");
-			bmuxes[0].put(12, "ApsCasBpc");
-			bmuxes[0].put(13, "OffBn");
-			bmuxes[0].put(14, "OnBn");
-			bmuxes[0].put(15, "DiffBn");
-
-			dmuxes[0].setName("DigMux3");
-			dmuxes[1].setName("DigMux2");
-			dmuxes[2].setName("DigMux1");
-			dmuxes[3].setName("DigMux0");
-
-			for (int i = 0; i < 4; i++) {
-				dmuxes[i].put(0, "AY179right");
-				dmuxes[i].put(1, "Acol");
-				dmuxes[i].put(2, "ColArbTopA");
-				dmuxes[i].put(3, "ColArbTopR");
-				dmuxes[i].put(4, "FF1");
-				dmuxes[i].put(5, "FF2");
-				dmuxes[i].put(6, "Rcarb");
-				dmuxes[i].put(7, "Rcol");
-				dmuxes[i].put(8, "Rrow");
-				dmuxes[i].put(9, "RxarbE");
-				dmuxes[i].put(10, "nAX0");
-				dmuxes[i].put(11, "nArowBottom");
-				dmuxes[i].put(12, "nArowTop");
-				dmuxes[i].put(13, "nRxOn");
-
-			}
-
-			dmuxes[3].put(14, "AY179");
-			dmuxes[3].put(15, "RY179");
-			dmuxes[2].put(14, "AY179");
-			dmuxes[2].put(15, "RY179");
-			dmuxes[1].put(14, "biasCalibSpike");
-			dmuxes[1].put(15, "nRY179right");
-			dmuxes[0].put(14, "nResetRxCol");
-			dmuxes[0].put(15, "nRYtestpixel");
-
-			amuxes[0].setName("AnaMux2");
-			amuxes[1].setName("AnaMux1");
-			amuxes[2].setName("AnaMux0");
-
-			for (int i = 0; i < 3; i++) {
-				amuxes[i].put(0, "on");
-				amuxes[i].put(1, "off");
-				amuxes[i].put(2, "vdiff");
-				amuxes[i].put(3, "nResetPixel");
-				amuxes[i].put(4, "pr");
-				amuxes[i].put(5, "pd");
-			}
-
-			amuxes[0].put(6, "calibNeuron");
-			amuxes[0].put(7, "nTimeout_AI");
-
-			amuxes[1].put(6, "apsgate");
-			amuxes[1].put(7, "apsout");
-
-			amuxes[2].put(6, "apsgate");
-			amuxes[2].put(7, "apsout");
+	String getMuxBitString(final OutputMux[] muxs) {
+		final StringBuilder s = new StringBuilder();
+		for (final OutputMux m : muxs) {
+			s.append(m.getBitString());
 		}
+		// System.out.println(s);
+		return s.toString();
+	}
 
-		class VoltageOutputMap extends OutputMap {
-
-			/**
-			 *
-			 */
-			private static final long serialVersionUID = 6879327648740466775L;
-
-			final void put(final int k, final int v) {
-				put(k, v, "Voltage " + k);
-			}
-
-			VoltageOutputMap() {
-				put(0, 1);
-				put(1, 3);
-				put(2, 5);
-				put(3, 7);
-				put(4, 9);
-				put(5, 11);
-				put(6, 13);
-				put(7, 15);
-			}
+	String getConfigBitString() {
+		final StringBuilder s = new StringBuilder();
+		for (int i = 0; i < (TOTAL_CONFIG_BITS - getConfigBits().length); i++) {
+			s.append("0");
 		}
-
-		class DigitalOutputMap extends OutputMap {
-
-			/**
-			 *
-			 */
-			private static final long serialVersionUID = -6746104146330795823L;
-
-			DigitalOutputMap() {
-				for (int i = 0; i < 16; i++) {
-					put(i, i, "DigOut " + i);
-				}
+		for (int i = getConfigBits().length - 1; i >= 0; i--) {
+			if (getConfigBits()[i] != null) {
+				s.append(getConfigBits()[i].isSet() ? "1" : "0");
 			}
-		}
-
-		public class AnalogOutputMux extends OutputMux {
-
-			public AnalogOutputMux(final int n) {
-				super(sbChip, 4, 8, (new VoltageOutputMap()));
-				setName("Voltages" + n);
-			}
-		}
-
-		public class DigitalOutputMux extends OutputMux {
-
-			public DigitalOutputMux(final int n) {
-				super(sbChip, 4, 16, (new DigitalOutputMap()));
-				setName("LogicSignals" + n);
-			}
-		}
-
-		@Override
-		public String getBitString() {
-			// System.out.print("dig muxes ");
-			final String dMuxBits = getMuxBitString(dmuxes);
-			// System.out.print("config bits ");
-			final String configBitString = getConfigBitString();
-			// System.out.print("analog muxes ");
-			final String aMuxBits = getMuxBitString(amuxes);
-			// System.out.print("bias muxes ");
-			final String bMuxBits = getMuxBitString(bmuxes);
-
-			final String chipConfigChainString = (dMuxBits + configBitString + aMuxBits + bMuxBits);
-			// System.out.println("On chip config chain: "+chipConfigChain);
-
-			return chipConfigChainString; // returns bytes padded at end
-		}
-
-		String getMuxBitString(final OutputMux[] muxs) {
-			final StringBuilder s = new StringBuilder();
-			for (final OutputMux m : muxs) {
-				s.append(m.getBitString());
-			}
-			// System.out.println(s);
-			return s.toString();
-		}
-
-		String getConfigBitString() {
-			final StringBuilder s = new StringBuilder();
-			for (int i = 0; i < (TOTAL_CONFIG_BITS - getConfigBits().length); i++) {
+			else {
 				s.append("0");
 			}
-			for (int i = getConfigBits().length - 1; i >= 0; i--) {
-				if (getConfigBits()[i] != null) {
-					s.append(getConfigBits()[i].isSet() ? "1" : "0");
-				}
-				else {
-					s.append("0");
-				}
-			}
-			// System.out.println(s);
-			return s.toString();
 		}
+		// System.out.println(s);
+		return s.toString();
+	}
 
-		@Override
-		public MuxControlPanel buildMuxControlPanel() {
-			return new MuxControlPanel(muxes);
+	@Override
+	public MuxControlPanel buildMuxControlPanel() {
+		return new MuxControlPanel(muxes);
+	}
+
+	@Override
+	public JPanel getChipConfigPanel() {
+		final JPanel chipConfigPanel = new JPanel();
+		chipConfigPanel.setLayout(new BoxLayout(chipConfigPanel, BoxLayout.Y_AXIS));
+
+		// On-Chip config bits
+		final JPanel extraPanel = new JPanel();
+		extraPanel.setLayout(new BoxLayout(extraPanel, BoxLayout.Y_AXIS));
+		for (final OnchipConfigBit b : getConfigBits()) {
+			if (b != null) {
+				extraPanel.add(new JRadioButton(b.getAction()));
+			}
 		}
+		extraPanel.setBorder(new TitledBorder("Extra on-chip bits"));
+		chipConfigPanel.add(extraPanel);
 
-		@Override
-		public JPanel getChipConfigPanel() {
-			final JPanel chipConfigPanel = new JPanel();
-			chipConfigPanel.setLayout(new BoxLayout(chipConfigPanel, BoxLayout.Y_AXIS));
+		// FX2 port bits
+		final JPanel portBitsPanel = new JPanel();
+		portBitsPanel.setLayout(new BoxLayout(portBitsPanel, BoxLayout.Y_AXIS));
+		for (final PortBit p : portBits) {
+			portBitsPanel.add(new JRadioButton(p.getAction()));
+		}
+		portBitsPanel.setBorder(new TitledBorder("Cypress FX2 port bits"));
+		chipConfigPanel.add(portBitsPanel);
 
-			// On-Chip config bits
-			final JPanel extraPanel = new JPanel();
-			extraPanel.setLayout(new BoxLayout(extraPanel, BoxLayout.Y_AXIS));
-			for (final OnchipConfigBit b : getConfigBits()) {
-				if (b != null) {
-					extraPanel.add(new JRadioButton(b.getAction()));
-				}
+		final JPanel miscControlBitsPanel = new JPanel();
+		miscControlBitsPanel.setLayout(new BoxLayout(miscControlBitsPanel, BoxLayout.Y_AXIS));
+		final JLabel miscControlBitsLabel = new JLabel(HexString.toString(miscControlBits.get()));
+		miscControlBitsPanel.add(miscControlBitsLabel);
+		miscControlBitsPanel.setBorder(new TitledBorder("miscControlBits"));
+		chipConfigPanel.add(miscControlBitsPanel);
+		miscControlBits.addObserver(new Observer() {
+
+			@Override
+			public void update(final Observable o, final Object o1) {
+				miscControlBitsLabel.setText(HexString.toString(miscControlBits.get()));
 			}
-			extraPanel.setBorder(new TitledBorder("Extra on-chip bits"));
-			chipConfigPanel.add(extraPanel);
+		});
 
-			// FX2 port bits
-			final JPanel portBitsPanel = new JPanel();
-			portBitsPanel.setLayout(new BoxLayout(portBitsPanel, BoxLayout.Y_AXIS));
-			for (final PortBit p : portBits) {
-				portBitsPanel.add(new JRadioButton(p.getAction()));
+		// event translation control
+		final JPanel eventTranslationControlPanel = new JPanel();
+		eventTranslationControlPanel.setBorder(new TitledBorder("DVS event translation control"));
+		eventTranslationControlPanel.setLayout(new BoxLayout(eventTranslationControlPanel, BoxLayout.Y_AXIS));
+		// add a reset button on top of everything
+		final Action translateRowOnlyEventsAction = new AbstractAction("Translate row-only events") {
+			{
+				putValue(Action.SHORT_DESCRIPTION,
+					"<html>Controls whether row-only events (row request but no column request) "
+						+ "<br>are captured from USB data stream in ApsDvsHardwareInterface. "
+						+ "<p>These events are rendered as OFF events at x=239");
+				putValue(Action.SELECTED_KEY, translateRowOnlyEvents);
 			}
-			portBitsPanel.setBorder(new TitledBorder("Cypress FX2 port bits"));
-			chipConfigPanel.add(portBitsPanel);
 
-			final JPanel miscControlBitsPanel = new JPanel();
-			miscControlBitsPanel.setLayout(new BoxLayout(miscControlBitsPanel, BoxLayout.Y_AXIS));
-			final JLabel miscControlBitsLabel = new JLabel(HexString.toString(miscControlBits.get()));
-			miscControlBitsPanel.add(miscControlBitsLabel);
-			miscControlBitsPanel.setBorder(new TitledBorder("miscControlBits"));
-			chipConfigPanel.add(miscControlBitsPanel);
-			miscControlBits.addObserver(new Observer() {
+			@Override
+			public void actionPerformed(final ActionEvent evt) {
+				setTranslateRowOnlyEvents(!isTranslateRowOnlyEvents());
+			}
+		};
+		final JRadioButton translateRowOnlyEventsButton = new JRadioButton(translateRowOnlyEventsAction);
+		eventTranslationControlPanel.add(translateRowOnlyEventsButton);
+		getSupport().addPropertyChangeListener(DavisDisplayConfigInterface.PROPERTY_TRANSLATE_ROW_ONLY_EVENTS,
+			new PropertyChangeListener() {
 
 				@Override
-				public void update(final Observable o, final Object o1) {
-					miscControlBitsLabel.setText(HexString.toString(miscControlBits.get()));
+				public void propertyChange(final PropertyChangeEvent evt) {
+					translateRowOnlyEventsButton.setSelected((boolean) evt.getNewValue());
 				}
 			});
+		chipConfigPanel.add(eventTranslationControlPanel);
 
-			// event translation control
-			final JPanel eventTranslationControlPanel = new JPanel();
-			eventTranslationControlPanel.setBorder(new TitledBorder("DVS event translation control"));
-			eventTranslationControlPanel.setLayout(new BoxLayout(eventTranslationControlPanel, BoxLayout.Y_AXIS));
-			// add a reset button on top of everything
-			final Action translateRowOnlyEventsAction = new AbstractAction("Translate row-only events") {
-				{
-					putValue(Action.SHORT_DESCRIPTION,
-						"<html>Controls whether row-only events (row request but no column request) "
-							+ "<br>are captured from USB data stream in ApsDvsHardwareInterface. "
-							+ "<p>These events are rendered as OFF events at x=239");
-					putValue(Action.SELECTED_KEY, translateRowOnlyEvents);
-				}
+		// External AER control panel (CAVIAR)
+		final JPanel externalAERControlPanel = new JPanel();
+		externalAERControlPanel.setBorder(new TitledBorder("DVS external AER control"));
+		externalAERControlPanel.setLayout(new BoxLayout(externalAERControlPanel, BoxLayout.Y_AXIS));
 
-				@Override
-				public void actionPerformed(final ActionEvent evt) {
-					setTranslateRowOnlyEvents(!isTranslateRowOnlyEvents());
-				}
-			};
-			final JRadioButton translateRowOnlyEventsButton = new JRadioButton(translateRowOnlyEventsAction);
-			eventTranslationControlPanel.add(translateRowOnlyEventsButton);
-			getSupport().addPropertyChangeListener(DavisDisplayConfigInterface.PROPERTY_TRANSLATE_ROW_ONLY_EVENTS,
-				new PropertyChangeListener() {
+		final Action externalAERControlAction = new AbstractAction("Enable external AER Control") {
+			{
+				putValue(Action.SHORT_DESCRIPTION,
+					"<html>Control wheter AER ACK is controlled by our logic or external systems like CAVIAR.");
+				putValue(Action.SELECTED_KEY, externalAERControlEnabled);
+			}
 
-					@Override
-					public void propertyChange(final PropertyChangeEvent evt) {
-						translateRowOnlyEventsButton.setSelected((boolean) evt.getNewValue());
-					}
-				});
-			chipConfigPanel.add(eventTranslationControlPanel);
+			@Override
+			public void actionPerformed(final ActionEvent evt) {
+				setExternalAERControlEnabled(!isExternalAERControlEnabled());
+			}
+		};
+		final JRadioButton externalAERControlButton = new JRadioButton(externalAERControlAction);
+		externalAERControlPanel.add(externalAERControlButton);
 
-			// External AER control panel (CAVIAR)
-			final JPanel externalAERControlPanel = new JPanel();
-			externalAERControlPanel.setBorder(new TitledBorder("DVS external AER control"));
-			externalAERControlPanel.setLayout(new BoxLayout(externalAERControlPanel, BoxLayout.Y_AXIS));
+		chipConfigPanel.add(externalAERControlPanel);
 
-			final Action externalAERControlAction = new AbstractAction("Enable external AER Control") {
-				{
-					putValue(Action.SHORT_DESCRIPTION,
-						"<html>Control wheter AER ACK is controlled by our logic or external systems like CAVIAR.");
-					putValue(Action.SELECTED_KEY, externalAERControlEnabled);
-				}
+		// APS Guaranteed Image Transfer control panel
+		final JPanel apsGuaranteedImageTransferPanel = new JPanel();
+		apsGuaranteedImageTransferPanel.setBorder(new TitledBorder("APS Guaranteed Image Transfer"));
+		apsGuaranteedImageTransferPanel.setLayout(new BoxLayout(apsGuaranteedImageTransferPanel, BoxLayout.Y_AXIS));
 
-				@Override
-				public void actionPerformed(final ActionEvent evt) {
-					setExternalAERControlEnabled(!isExternalAERControlEnabled());
-				}
-			};
-			final JRadioButton externalAERControlButton = new JRadioButton(externalAERControlAction);
-			externalAERControlPanel.add(externalAERControlButton);
+		final Action apsGuaranteedImageTransferAction = new AbstractAction("Ensure APS data transfer") {
+			{
+				putValue(Action.SHORT_DESCRIPTION,
+					"<html>Ensure APS data is never dropped when going through logic and FIFO buffers; <br>frames can still be dropped if packet rendering max size is exceeded <br>(see option USB/Set rendering AE packet size).");
+				putValue(Action.SELECTED_KEY, apsGuaranteedImageTransfer);
+			}
 
-			chipConfigPanel.add(externalAERControlPanel);
+			@Override
+			public void actionPerformed(final ActionEvent evt) {
+				setAPSGuaranteedImageTransfer(!isAPSGuaranteedImageTransfer());
+			}
+		};
+		final JRadioButton apsGuaranteedImageTransferButton = new JRadioButton(apsGuaranteedImageTransferAction);
+		apsGuaranteedImageTransferPanel.add(apsGuaranteedImageTransferButton);
 
-			// APS Guaranteed Image Transfer control panel
-			final JPanel apsGuaranteedImageTransferPanel = new JPanel();
-			apsGuaranteedImageTransferPanel.setBorder(new TitledBorder("APS Guaranteed Image Transfer"));
-			apsGuaranteedImageTransferPanel.setLayout(new BoxLayout(apsGuaranteedImageTransferPanel, BoxLayout.Y_AXIS));
+		chipConfigPanel.add(apsGuaranteedImageTransferPanel);
 
-			final Action apsGuaranteedImageTransferAction = new AbstractAction("Ensure APS data transfer") {
-				{
-					putValue(Action.SHORT_DESCRIPTION,
-						"<html>Ensure APS data is never dropped when going through logic and FIFO buffers; <br>frames can still be dropped if packet rendering max size is exceeded <br>(see option USB/Set rendering AE packet size).");
-					putValue(Action.SELECTED_KEY, apsGuaranteedImageTransfer);
-				}
+		// External, hardware BA filter control panel
+		final JPanel hardwareBAFilterEnabledPanel = new JPanel();
+		hardwareBAFilterEnabledPanel.setBorder(new TitledBorder("Hardware BA Filter"));
+		hardwareBAFilterEnabledPanel.setLayout(new BoxLayout(hardwareBAFilterEnabledPanel, BoxLayout.Y_AXIS));
 
-				@Override
-				public void actionPerformed(final ActionEvent evt) {
-					setAPSGuaranteedImageTransfer(!isAPSGuaranteedImageTransfer());
-				}
-			};
-			final JRadioButton apsGuaranteedImageTransferButton = new JRadioButton(apsGuaranteedImageTransferAction);
-			apsGuaranteedImageTransferPanel.add(apsGuaranteedImageTransferButton);
+		final Action hardwareBAFilterEnabledAction = new AbstractAction("Enable hardware BA filter") {
+			{
+				putValue(Action.SHORT_DESCRIPTION,
+					"<html>Enable hardware background-activity filter (FX3 boards only. Logic or AERCorrFilter).");
+				putValue(Action.SELECTED_KEY, hardwareBAFilterEnabled);
+			}
 
-			chipConfigPanel.add(apsGuaranteedImageTransferPanel);
+			@Override
+			public void actionPerformed(final ActionEvent evt) {
+				setHardwareBAFilterEnabled(!isHardwareBAFilterEnabled());
+			}
+		};
+		final JRadioButton hardwareBAFilterEnabledButton = new JRadioButton(hardwareBAFilterEnabledAction);
+		hardwareBAFilterEnabledPanel.add(hardwareBAFilterEnabledButton);
 
-			// External, hardware BA filter control panel
-			final JPanel hardwareBAFilterEnabledPanel = new JPanel();
-			hardwareBAFilterEnabledPanel.setBorder(new TitledBorder("Hardware BA Filter"));
-			hardwareBAFilterEnabledPanel.setLayout(new BoxLayout(hardwareBAFilterEnabledPanel, BoxLayout.Y_AXIS));
+		chipConfigPanel.add(hardwareBAFilterEnabledPanel);
 
-			final Action hardwareBAFilterEnabledAction = new AbstractAction("Enable hardware BA filter") {
-				{
-					putValue(Action.SHORT_DESCRIPTION,
-						"<html>Enable hardware background-activity filter (FX3 boards only. Logic or AERCorrFilter).");
-					putValue(Action.SELECTED_KEY, hardwareBAFilterEnabled);
-				}
-
-				@Override
-				public void actionPerformed(final ActionEvent evt) {
-					setHardwareBAFilterEnabled(!isHardwareBAFilterEnabled());
-				}
-			};
-			final JRadioButton hardwareBAFilterEnabledButton = new JRadioButton(hardwareBAFilterEnabledAction);
-			hardwareBAFilterEnabledPanel.add(hardwareBAFilterEnabledButton);
-
-			chipConfigPanel.add(hardwareBAFilterEnabledPanel);
-
-			return chipConfigPanel;
-		}
+		return chipConfigPanel;
 	}
 
 	@Override
