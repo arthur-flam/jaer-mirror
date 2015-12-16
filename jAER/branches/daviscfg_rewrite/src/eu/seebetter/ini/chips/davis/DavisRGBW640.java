@@ -233,14 +233,14 @@ public class DavisRGBW640 extends DavisBaseCamera {
 					}
 
 					// Start of Frame (SOF)
-					if (pixFirst && !getDavisConfig().getApsReadoutControl().isGlobalShutterMode()
+					if (pixFirst && !getDavisConfig().isGlobalShutter()
 						&& (readoutType == ApsDvsEventRGBW.ReadoutType.ResetRead)) { // RS
 						createApsFlagEvent(outItr, ApsDvsEventRGBW.ReadoutType.SOF, timestamp);
 
 						frameIntervalUs = timestamp - frameExposureStartTimestampUs;
 						frameExposureStartTimestampUs = timestamp;
 					}
-					if (pixFirst && getDavisConfig().getApsReadoutControl().isGlobalShutterMode()
+					if (pixFirst && getDavisConfig().isGlobalShutter()
 						&& (readoutType == ApsDvsEventRGBW.ReadoutType.SignalRead)) { // GS
 						createApsFlagEvent(outItr, ApsDvsEventRGBW.ReadoutType.SOF, timestamp);
 
@@ -260,7 +260,7 @@ public class DavisRGBW640 extends DavisBaseCamera {
 					e.setColorFilter(ColorFilter);
 
 					// TODO: figure out exposure for both GS and RS, and start of frame for GS.
-					if (pixLast && !getDavisConfig().getApsReadoutControl().isGlobalShutterMode()
+					if (pixLast && !getDavisConfig().isGlobalShutter()
 						&& (readoutType == ApsDvsEventRGBW.ReadoutType.SignalRead)) {
 						// if we use ResetRead+SignalRead+C readout, OR, if we use ResetRead-SignalRead readout and we
 						// are at last APS pixel, then write EOF event
@@ -270,7 +270,7 @@ public class DavisRGBW640 extends DavisBaseCamera {
 						increaseFrameCount(1);
 					}
 
-					if (pixLast && getDavisConfig().getApsReadoutControl().isGlobalShutterMode()
+					if (pixLast && getDavisConfig().isGlobalShutter()
 						&& (readoutType == ApsDvsEventRGBW.ReadoutType.ResetRead)) {
 						// if we use ResetRead+SignalRead+C readout, OR, if we use ResetRead-SignalRead readout and we
 						// are at last APS pixel, then write EOF event

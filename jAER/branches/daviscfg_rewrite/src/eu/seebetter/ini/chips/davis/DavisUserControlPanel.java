@@ -16,10 +16,9 @@ import java.util.logging.Logger;
 import javax.swing.JSpinner;
 
 import ch.unizh.ini.jaer.chip.retina.DVSTweaks;
-import ch.unizh.ini.jaer.config.cpld.CPLDInt;
 import eu.seebetter.ini.chips.DavisChip;
 import net.sf.jaer.biasgen.PotTweaker;
-import net.sf.jaer.chip.AEChip;
+import net.sf.jaer.chip.Chip;
 import net.sf.jaer.graphics.AEChipRenderer;
 import net.sf.jaer.graphics.AEFrameChipRenderer;
 
@@ -37,17 +36,15 @@ public class DavisUserControlPanel extends javax.swing.JPanel implements Propert
 	protected DavisChip chip = null;
 	protected DavisTweaks apsDvsTweaks;
 	DavisConfig.VideoControl videoControl;
-	DavisConfig.ApsReadoutControl apsReadoutControl;
 	DavisVideoContrastController contrastController;
 	AEChipRenderer renderer = null;
 
 	private static final Logger log = Logger.getLogger("DVSFunctionalControlPanel");
-	CPLDInt exposureCPLDInt, frameDelayCPLDInt;
 
 	/**
 	 * Creates new form ApsDVSUserControlPanel
 	 */
-	public DavisUserControlPanel(final AEChip chip) {
+	public DavisUserControlPanel(final Chip chip) {
 		this.chip = (DavisChip) chip; // will throw ClassCastException if not right kind of chip.
 		renderer = this.chip.getRenderer();
 		apsDvsTweaks = (DavisTweaks) chip.getBiasgen();
@@ -61,7 +58,7 @@ public class DavisUserControlPanel extends javax.swing.JPanel implements Propert
 		histCB.setSelected(this.chip.isShowImageHistogram());
 		fdSp.setValue(getConfig().getFrameDelayMs());
 		edSp.setValue(getConfig().getExposureDelayMs());
-		glShutterCB.setSelected(((DavisBaseCamera) chip).getDavisConfig().getApsReadoutControl().isGlobalShutterMode());
+		glShutterCB.setSelected(((DavisBaseCamera) chip).getDavisConfig().isGlobalShutterMode());
 		displayEventsCheckBox.setSelected(getConfig().isDisplayEvents());
 		displayFramesCheckBox.setSelected(getConfig().isDisplayFrames());
 		captureFramesCheckBox.setSelected(getConfig().isCaptureFramesEnabled());

@@ -221,8 +221,6 @@ public class USBIOHardwareInterfaceFactory implements UsbIoErrorCodes, PnPNotify
                 return new CypressFX2MonitorSequencer(n);
             case SiLabsC8051F320_USBIO_AeSequencer.PID:
                 return new SiLabsC8051F320_USBIO_AeSequencer(n);
-            case ApsDvsHardwareInterface.PID:
-                return new ApsDvsHardwareInterface(n);
             case CochleaAMS1bHardwareInterface.PID:
                 return new CochleaAMS1bHardwareInterface(n);
             case CochleaAMS1cHardwareInterface.PID:

@@ -177,7 +177,7 @@ abstract public class DavisBaseCamera extends DavisChip implements RemoteControl
 		getPrefs().putInt("DavisBaseCamera.autoshotThresholdEvents", thresholdEvents);
 
 		if (autoshotThresholdEvents == 0) {
-			getDavisConfig().runAdc.set(true);
+			getDavisConfig().setCaptureFramesEnabled(true);
 		}
 	}
 
@@ -283,12 +283,12 @@ abstract public class DavisBaseCamera extends DavisChip implements RemoteControl
 
 	@Override
 	public void setPowerDown(final boolean powerDown) {
-		getDavisConfig().powerDown.set(powerDown);
+		getDavisConfig().setCaptureEvents(!powerDown);
 	}
 
 	@Override
 	public void setADCEnabled(final boolean adcEnabled) {
-		getDavisConfig().getApsReadoutControl().setAdcEnabled(adcEnabled);
+		getDavisConfig().setCaptureFramesEnabled(adcEnabled);
 	}
 
 	/**
@@ -378,7 +378,7 @@ abstract public class DavisBaseCamera extends DavisChip implements RemoteControl
 			final int n = in.getNumEvents(); // addresses.length;
 			final int sx1 = chip.getSizeX() - 1;
 			chip.getSizeY();
-			final boolean rollingShutter = !getDavisConfig().getApsReadoutControl().isGlobalShutterMode();
+			final boolean rollingShutter = !getDavisConfig().isGlobalShutter();
 
 			final int[] datas = in.getAddresses();
 			final int[] timestamps = in.getTimestamps();

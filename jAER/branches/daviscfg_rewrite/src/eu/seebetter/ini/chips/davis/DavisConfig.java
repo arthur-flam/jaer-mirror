@@ -6,61 +6,55 @@
 package eu.seebetter.ini.chips.davis;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.border.TitledBorder;
+import javax.swing.JTextField;
 
-import ch.unizh.ini.jaer.chip.cochlea.CochleaAMS1c.Biasgen.PortBit;
 import ch.unizh.ini.jaer.chip.retina.DVSTweaks;
 import ch.unizh.ini.jaer.config.AbstractConfigValue;
-import ch.unizh.ini.jaer.config.mux.MuxControlPanel;
-import ch.unizh.ini.jaer.config.mux.OutputMux;
 import ch.unizh.ini.jaer.config.spi.SPIConfigBit;
 import ch.unizh.ini.jaer.config.spi.SPIConfigInt;
 import ch.unizh.ini.jaer.config.spi.SPIConfigValue;
 import eu.seebetter.ini.chips.davis.imu.ImuAccelScale;
 import eu.seebetter.ini.chips.davis.imu.ImuControl;
 import eu.seebetter.ini.chips.davis.imu.ImuControlPanel;
-import net.sf.jaer.biasgen.AddressedIPot;
 import net.sf.jaer.biasgen.AddressedIPotArray;
 import net.sf.jaer.biasgen.Biasgen;
-import net.sf.jaer.biasgen.Biasgen.HasPreference;
 import net.sf.jaer.biasgen.ChipControlPanel;
-import net.sf.jaer.biasgen.IPot;
-import net.sf.jaer.biasgen.Masterbias;
 import net.sf.jaer.biasgen.Pot;
 import net.sf.jaer.biasgen.PotTweakerUtilities;
-import net.sf.jaer.biasgen.VDAC.VPot;
 import net.sf.jaer.biasgen.coarsefine.AddressedIPotCF;
 import net.sf.jaer.biasgen.coarsefine.ShiftedSourceBiasCF;
 import net.sf.jaer.biasgen.coarsefine.ShiftedSourceControlsCF;
+import net.sf.jaer.chip.AEChip;
 import net.sf.jaer.chip.Chip;
 import net.sf.jaer.graphics.AEFrameChipRenderer;
 import net.sf.jaer.hardwareinterface.HardwareInterfaceException;
 import net.sf.jaer.hardwareinterface.usb.cypressfx3libusb.CypressFX3;
 import net.sf.jaer.util.HasPropertyTooltips;
-import net.sf.jaer.util.HexString;
 import net.sf.jaer.util.ParameterControlPanel;
 import net.sf.jaer.util.PropertyTooltipSupport;
 
@@ -69,9 +63,11 @@ import net.sf.jaer.util.PropertyTooltipSupport;
  *
  * @author tobi
  */
-public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayConfigInterface, DavisTweaks, ChipControlPanel {
+public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface, DavisTweaks, ChipControlPanel {
 	// All preferences, excluding biases.
 	private final List<AbstractConfigValue> allPreferencesList = new ArrayList<>();
+
+	private final Map<SPIConfigValue, JComponent> configValueMap = new HashMap<>();
 
 	// Preferences by category.
 	final List<SPIConfigValue> muxControl = new ArrayList<>();
@@ -82,12 +78,14 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	final List<SPIConfigValue> chipControl = new ArrayList<>();
 
 	// All bias types.
-	final SPIConfigBit biasForceEnable;
 	final AddressedIPotArray ipots = new AddressedIPotArray(this);
 	final ShiftedSourceBiasCF[] ssBiases = new ShiftedSourceBiasCF[2];
+	final ShiftedSourceBiasCF ssp, ssn;
 
 	// these pots for DVSTweaks
 	protected AddressedIPotCF diffOn, diffOff, refr, pr, sf, diff;
+	protected SPIConfigBit globalShutter, apsRun, dvsRun;
+	protected SPIConfigInt apsExposure, apsFrameDelay;
 
 	// subclasses for controlling aspects of camera
 	protected DavisConfig.VideoControl videoControl;
@@ -127,14 +125,14 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		setPotArray(ipots);
 
 		// shifted sources
-		final ShiftedSourceBiasCF ssp = new ShiftedSourceBiasCF(this);
+		ssp = new ShiftedSourceBiasCF(this);
 		ssp.setSex(Pot.Sex.P);
 		ssp.setName("SSP");
 		ssp.setTooltipString("p-type shifted source that generates a regulated voltage near Vdd");
 		ssp.setAddress(20);
 		ssp.addObserver(this);
 
-		final ShiftedSourceBiasCF ssn = new ShiftedSourceBiasCF(this);
+		ssn = new ShiftedSourceBiasCF(this);
 		ssn.setSex(Pot.Sex.N);
 		ssn.setName("SSN");
 		ssn.setTooltipString("n-type shifted source that generates a regulated voltage near ground");
@@ -164,7 +162,8 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		}
 
 		// DVS module
-		dvsControl.add(new SPIConfigBit("Run", "Enable DVS.", CypressFX3.FPGA_DVS, (short) 3, false, chip.getPrefs()));
+		dvsRun = new SPIConfigBit("Run", "Enable DVS.", CypressFX3.FPGA_DVS, (short) 3, false, chip.getPrefs());
+		dvsControl.add(dvsRun);
 		dvsControl.add(new SPIConfigInt("AckDelayRow", "Delay Row AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 4, 5, 4,
 			chip.getPrefs()));
 		dvsControl.add(new SPIConfigInt("AckDelayColumn", "Delay Column AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 5, 5, 0,
@@ -191,18 +190,22 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		}
 
 		// APS module
-		apsControl.add(new SPIConfigBit("Run", "Enable APS.", CypressFX3.FPGA_APS, (short) 4, false, chip.getPrefs()));
+		apsRun = new SPIConfigBit("Run", "Enable APS.", CypressFX3.FPGA_APS, (short) 4, false, chip.getPrefs());
+		apsControl.add(apsRun);
 		apsControl.add(new SPIConfigBit("ResetRead", "Do the reset read in addition to the signal read.", CypressFX3.FPGA_APS, (short) 5,
 			true, chip.getPrefs()));
 		apsControl.add(new SPIConfigBit("WaitOnTransferStall",
 			"On event FIFO full, pause and wait for free space. This ensures no APS pixels are dropped.", CypressFX3.FPGA_APS, (short) 6,
 			true, chip.getPrefs()));
-		apsControl.add(new SPIConfigBit("GlobalShutter", "Enable global shutter versus rolling shutter.", CypressFX3.FPGA_APS, (short) 8,
-			true, chip.getPrefs()));
-		apsControl
-			.add(new SPIConfigInt("Exposure", "Set exposure time (in µs).", CypressFX3.FPGA_APS, (short) 13, 20, 4000, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("FrameDelay", "Set delay time between frames (in µs).", CypressFX3.FPGA_APS, (short) 14, 20, 1000,
-			chip.getPrefs()));
+		globalShutter = new SPIConfigBit("GlobalShutter", "Enable global shutter versus rolling shutter.", CypressFX3.FPGA_APS, (short) 8,
+			true, chip.getPrefs());
+		apsControl.add(globalShutter);
+		apsExposure = new SPIConfigInt("Exposure", "Set exposure time (in µs).", CypressFX3.FPGA_APS, (short) 13, 20, 4000,
+			chip.getPrefs());
+		apsControl.add(apsExposure);
+		apsFrameDelay = new SPIConfigInt("FrameDelay", "Set delay time between frames (in µs).", CypressFX3.FPGA_APS, (short) 14, 20, 1000,
+			chip.getPrefs());
+		apsControl.add(apsFrameDelay);
 		apsControl.add(
 			new SPIConfigInt("ResetSettle", "Set reset settle time (in cycles).", CypressFX3.FPGA_APS, (short) 15, 7, 10, chip.getPrefs()));
 		apsControl.add(new SPIConfigInt("ColumnSettle", "Set column settle time (in cycles).", CypressFX3.FPGA_APS, (short) 16, 7, 30,
@@ -344,25 +347,19 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	public static final String PROPERTY_EXPOSURE_DELAY_US = "PROPERTY_EXPOSURE_DELAY_US";
 	public static final String PROPERTY_FRAME_DELAY_US = "PROPERTY_FRAME_DELAY_US";
 
-	private ParameterControlPanel videoParameterControlPanel = null, apsReadoutParameterControlPanel = null;
-	private ShiftedSourceBiasCF ssn, ssp;
+	private ParameterControlPanel videoParameterControlPanel;
+	private JPanel userFriendlyControls;
 	private JPanel configPanel;
 	private JTabbedPane configTabbedPane;
 
-	protected int aeReaderFifoSize;
-	protected int aeReaderNumBuffers;
-	protected int autoShotThreshold; // threshold for triggering a new frame snapshot automatically
+	// threshold for triggering a new frame snapshot automatically
+	private int autoShotThreshold;
+
 	// DVSTweasks from DVS128
-	protected float bandwidth = 1;
-	protected boolean debugControls = false;
-	protected float maxFiringRate = 1;
-	protected float onOffBalance = 1;
-	protected float threshold = 1;
-	protected boolean translateRowOnlyEvents;
-	protected boolean externalAERControlEnabled;
-	protected boolean apsGuaranteedImageTransfer;
-	protected boolean hardwareBAFilterEnabled;
-	JPanel userFriendlyControls;
+	private float bandwidth = 1;
+	private float maxFiringRate = 1;
+	private float onOffBalance = 1;
+	private float threshold = 1;
 
 	/**
 	 *
@@ -373,110 +370,134 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	 */
 	@Override
 	public JPanel buildControlPanel() {
-		// if(displayControlPanel!=null) return displayControlPanel;
+		setBatchEditOccurring(true); // stop updates on building panel
+
 		configPanel = new JPanel();
+		configPanel.setLayout(new BorderLayout());
+
 		final JScrollPane scrollPane = new JScrollPane();
 		scrollPane.add(configPanel);
-		configPanel.setLayout(new BorderLayout());
-		debugControls = chip.getPrefs().getBoolean("debugControls", false);
-		// add a reset button on top of everything
-		final Action resetChipAction = new AbstractAction("Reset chip") {
-			{
-				putValue(Action.SHORT_DESCRIPTION, "Resets the pixels and the AER logic momentarily");
-			}
 
-			@Override
-			public void actionPerformed(final ActionEvent evt) {
-				resetChip();
-			}
-		};
-		// add action to display user friendly controls toggled either next to expert controls or in another tab
-		final Action toggleDebugControlsAction = new AbstractAction("Toggle debug controls") {
-			{
-				putValue(Action.SHORT_DESCRIPTION, "Toggles display of user friendly controls next to other tabbed panes for debugging");
-			}
-
-			@Override
-			public void actionPerformed(final ActionEvent evt) {
-				toggleDebugControls();
-			}
-		};
-		final JPanel specialButtons = new JPanel();
-		specialButtons.setLayout(new BoxLayout(specialButtons, BoxLayout.X_AXIS));
-		specialButtons.add(new JButton(resetChipAction));
-		specialButtons.add(new JButton(toggleDebugControlsAction));
 		configTabbedPane = new JTabbedPane();
-		setBatchEditOccurring(true); // stop updates on building panel
-		configPanel.add(specialButtons, BorderLayout.NORTH);
-		userFriendlyControls = new DavisUserControlPanel(chip);
-		if (debugControls) {
-			configPanel.add(userFriendlyControls, BorderLayout.EAST);
-		}
-		else {
-			// user friendly control panel
-			configTabbedPane.add("<html><strong><font color=\"red\">User-Friendly Controls", userFriendlyControls);
-		}
-		// graphics
-		final JPanel videoControlPanel = new JPanel();
-		videoControlPanel.add(new JLabel("<html>Controls display of APS video frame data"));
-		videoControlPanel.setLayout(new BoxLayout(videoControlPanel, BoxLayout.Y_AXIS));
-		configTabbedPane.add("Video Control", videoControlPanel);
-		videoParameterControlPanel = new ParameterControlPanel(getVideoControl());
-		videoControlPanel.add(videoParameterControlPanel);
-		getVideoControl().addObserver(videoParameterControlPanel); // TODO this is trick to get the
-		getVideoControl().getContrastContoller().addObserver(videoParameterControlPanel);
-		// ParameterControlPanel to listen to Observerable
-		// changes in videoControl
+		userFriendlyControls = new DavisUserControlPanel(getChip());
+		configTabbedPane.addTab("<html><strong><font color=\"red\">User-Friendly Controls", userFriendlyControls);
 
 		// biasgen
 		final JPanel combinedBiasShiftedSourcePanel = new JPanel();
-		videoControlPanel.add(new JLabel("<html>Low-level control of on-chip bias currents and voltages. <p>These are only for experts!"));
+		combinedBiasShiftedSourcePanel
+			.add(new JLabel("<html>Low-level control of on-chip bias currents and voltages. <p>These are only for experts!"));
 		combinedBiasShiftedSourcePanel.setLayout(new BoxLayout(combinedBiasShiftedSourcePanel, BoxLayout.Y_AXIS));
 		combinedBiasShiftedSourcePanel.add(super.buildControlPanel());
 		combinedBiasShiftedSourcePanel.add(new ShiftedSourceControlsCF(ssn));
 		combinedBiasShiftedSourcePanel.add(new ShiftedSourceControlsCF(ssp));
-		configTabbedPane.addTab("Bias Current Control", combinedBiasShiftedSourcePanel);
-		// muxes
-		configTabbedPane.addTab("Debug Output MUX control", new JScrollPane(getChipConfigChain().buildMuxControlPanel()));
-		// aps readout
-		final JPanel apsReadoutPanel = new JPanel();
-		apsReadoutPanel.add(new JLabel(
-			"<html>Low-level control of APS frame readout. <p>Hover over value fields to see explanations. <b>Incorrect settings will result in unusable output."));
-		apsReadoutPanel.setLayout(new BoxLayout(apsReadoutPanel, BoxLayout.Y_AXIS));
-		configTabbedPane.add("APS Readout Control", apsReadoutPanel);
-		apsReadoutParameterControlPanel = new ParameterControlPanel(getApsReadoutControl());
-		apsReadoutPanel.add(apsReadoutParameterControlPanel);
-		getExposureControlRegister().addObserver(apsReadoutParameterControlPanel);
-		getFrameDelayControlRegister().addObserver(apsReadoutParameterControlPanel); // TODO add more registers that
-		// need updating from
-		// DavisUserControlPanel
+		configTabbedPane.addTab("Bias Current Config", combinedBiasShiftedSourcePanel);
 
-		// IMU control
+		// Multiplexer
+		final JPanel muxPanel = new JPanel();
+		muxPanel.setLayout(new BoxLayout(muxPanel, BoxLayout.Y_AXIS));
+		configTabbedPane.addTab("Multiplexer Config", muxPanel);
+
+		for (final SPIConfigValue cfgVal : muxControl) {
+			if (cfgVal instanceof SPIConfigBit) {
+				makeSPIBitConfig((SPIConfigBit) cfgVal, muxPanel);
+			}
+			else if (cfgVal instanceof SPIConfigInt) {
+				makeSPIIntConfig((SPIConfigInt) cfgVal, muxPanel);
+			}
+		}
+
+		// DVS
+		final JPanel dvsPanel = new JPanel();
+		dvsPanel.setLayout(new BoxLayout(dvsPanel, BoxLayout.Y_AXIS));
+		configTabbedPane.addTab("DVS Config", dvsPanel);
+
+		for (final SPIConfigValue cfgVal : dvsControl) {
+			if (cfgVal instanceof SPIConfigBit) {
+				makeSPIBitConfig((SPIConfigBit) cfgVal, dvsPanel);
+			}
+			else if (cfgVal instanceof SPIConfigInt) {
+				makeSPIIntConfig((SPIConfigInt) cfgVal, dvsPanel);
+			}
+		}
+
+		// APS
+		final JPanel apsPanel = new JPanel();
+		apsPanel.setLayout(new BoxLayout(apsPanel, BoxLayout.Y_AXIS));
+		configTabbedPane.addTab("APS Config", apsPanel);
+
+		for (final SPIConfigValue cfgVal : apsControl) {
+			if (cfgVal instanceof SPIConfigBit) {
+				makeSPIBitConfig((SPIConfigBit) cfgVal, apsPanel);
+			}
+			else if (cfgVal instanceof SPIConfigInt) {
+				makeSPIIntConfig((SPIConfigInt) cfgVal, apsPanel);
+			}
+		}
+
+		// IMU
 		final JPanel imuControlPanel = new JPanel();
 		imuControlPanel.add(new JLabel("<html>Low-level control of integrated inertial measurement unit."));
 		imuControlPanel.setLayout(new BoxLayout(imuControlPanel, BoxLayout.Y_AXIS));
-		configTabbedPane.add("IMU Control", imuControlPanel);
 		imuControlPanel.add(new ImuControlPanel(this));
-		// autoexposure
-		if (chip instanceof DavisBaseCamera) {
+		configTabbedPane.addTab("IMU Config", imuControlPanel);
+
+		// External Input
+		final JPanel extPanel = new JPanel();
+		extPanel.setLayout(new BoxLayout(extPanel, BoxLayout.Y_AXIS));
+		configTabbedPane.addTab("External Input Config", extPanel);
+
+		for (final SPIConfigValue cfgVal : extInControl) {
+			if (cfgVal instanceof SPIConfigBit) {
+				makeSPIBitConfig((SPIConfigBit) cfgVal, extPanel);
+			}
+			else if (cfgVal instanceof SPIConfigInt) {
+				makeSPIIntConfig((SPIConfigInt) cfgVal, extPanel);
+			}
+		}
+
+		// Chip config
+		final JPanel chipPanel = new JPanel();
+		chipPanel.setLayout(new BoxLayout(chipPanel, BoxLayout.Y_AXIS));
+		configTabbedPane.addTab("Chip Config", chipPanel);
+
+		for (final SPIConfigValue cfgVal : chipControl) {
+			if (cfgVal instanceof SPIConfigBit) {
+				makeSPIBitConfig((SPIConfigBit) cfgVal, chipPanel);
+			}
+			else if (cfgVal instanceof SPIConfigInt) {
+				makeSPIIntConfig((SPIConfigInt) cfgVal, chipPanel);
+			}
+		}
+
+		// Autoexposure
+		if (getChip() instanceof DavisBaseCamera) {
 			final JPanel autoExposurePanel = new JPanel();
 			autoExposurePanel.add(new JLabel(
 				"<html>Automatic exposure control.<p>The settings here determine when and by how much the exposure value should be changed. <p> The strategy followed attempts to avoid a sitation <b> where too many pixels are under- or over-exposed. Hover over entry fields to see explanations."));
 			autoExposurePanel.setLayout(new BoxLayout(autoExposurePanel, BoxLayout.Y_AXIS));
-			configTabbedPane.add("APS Autoexposure Control", autoExposurePanel);
-			autoExposurePanel.add(new ParameterControlPanel(((DavisBaseCamera) chip).getAutoExposureController()));
+			autoExposurePanel.add(new ParameterControlPanel(((DavisBaseCamera) getChip()).getAutoExposureController()));
+			configTabbedPane.addTab("APS Autoexposure Control", autoExposurePanel);
 		}
-		// chip config
-		final JPanel chipConfigPanel = getChipConfigChain().getChipConfigPanel();
-		configTabbedPane.addTab("Chip configuration", chipConfigPanel);
-		configPanel.add(configTabbedPane, BorderLayout.CENTER);
+
+		// Video Control
+		final JPanel videoControlPanel = new JPanel();
+		videoControlPanel.add(new JLabel("<html>Controls display of APS video frame data"));
+		videoControlPanel.setLayout(new BoxLayout(videoControlPanel, BoxLayout.Y_AXIS));
+		videoParameterControlPanel = new ParameterControlPanel(getVideoControl());
+		videoControlPanel.add(videoParameterControlPanel);
+		configTabbedPane.addTab("Video Control", videoControlPanel);
+
+		getVideoControl().addObserver(videoParameterControlPanel);
+		getVideoControl().getContrastContoller().addObserver(videoParameterControlPanel);
+
 		// only select panel after all added
 		try {
-			configTabbedPane.setSelectedIndex(chip.getPrefs().getInt("DavisBaseCamera.bgTabbedPaneSelectedIndex", 0));
+			configTabbedPane.setSelectedIndex(getChip().getPrefs().getInt("DavisBaseCamera.bgTabbedPaneSelectedIndex", 0));
 		}
 		catch (final IndexOutOfBoundsException e) {
 			configTabbedPane.setSelectedIndex(0);
 		}
+
 		// add listener to store last selected tab
 		configTabbedPane.addMouseListener(new MouseAdapter() {
 			@Override
@@ -484,24 +505,9 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 				tabbedPaneMouseClicked(evt);
 			}
 		});
+
 		setBatchEditOccurring(false);
 		return configPanel;
-	}
-
-	/**
-	 * @return the aeReaderFifoSize
-	 */
-	@Override
-	public int getAeReaderFifoSize() {
-		return aeReaderFifoSize;
-	}
-
-	/**
-	 * @return the aeReaderNumBuffers
-	 */
-	@Override
-	public int getAeReaderNumBuffers() {
-		return aeReaderNumBuffers;
 	}
 
 	@Override
@@ -512,30 +518,6 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	@Override
 	public float getBandwidthTweak() {
 		return bandwidth;
-	}
-
-	@Override
-	public float getBrightness() {
-		if (getVideoControl() == null) {
-			return 0;
-		}
-		return getVideoControl().getBrightness();
-	}
-
-	@Override
-	public float getContrast() {
-		if (getVideoControl() == null) {
-			return 1;
-		}
-		return getVideoControl().getContrast();
-	}
-
-	@Override
-	public float getGamma() {
-		if (getVideoControl() == null) {
-			return 1;
-		}
-		return getVideoControl().getGamma();
 	}
 
 	@Override
@@ -554,35 +536,37 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	}
 
 	@Override
+	public float getBrightness() {
+		return getVideoControl().getBrightness();
+	}
+
+	@Override
+	public float getContrast() {
+		return getVideoControl().getContrast();
+	}
+
+	@Override
+	public float getGamma() {
+		return getVideoControl().getGamma();
+	}
+
+	@Override
 	public boolean isCaptureEventsEnabled() {
-		if (nChipReset == null) {
-			return false; // only to handle initial call before we are fully constructed, when propertyChangeListeners
-			// are called
-		}
-		return nChipReset.isSet();
+		return dvsRun.isSet();
 	}
 
 	@Override
 	public boolean isCaptureFramesEnabled() {
-		if (getApsReadoutControl() == null) {
-			return false;
-		}
-		return getApsReadoutControl().isAdcEnabled();
+		return apsRun.isSet();
 	}
 
 	@Override
 	public boolean isDisplayEvents() {
-		if (getVideoControl() == null) {
-			return false;
-		}
 		return getVideoControl().isDisplayEvents();
 	}
 
 	@Override
 	public boolean isDisplayFrames() {
-		if (getVideoControl() == null) {
-			return false;
-		}
 		return getVideoControl().isDisplayFrames();
 	}
 
@@ -597,79 +581,29 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	}
 
 	@Override
-	public boolean isTranslateRowOnlyEvents() {
-		return translateRowOnlyEvents;
-	}
-
-	public boolean isExternalAERControlEnabled() {
-		return externalAERControlEnabled;
-	}
-
-	public boolean isAPSGuaranteedImageTransfer() {
-		return apsGuaranteedImageTransfer;
-	}
-
-	public boolean isHardwareBAFilterEnabled() {
-		return hardwareBAFilterEnabled;
-	}
-
-	@Override
 	public boolean isUseAutoContrast() {
-		if (getVideoControl() == null) {
-			return false;
-		}
 		return getVideoControl().isUseAutoContrast();
 	}
 
 	@Override
-	public void loadPreference() {
-		super.loadPreference(); // To change body of generated methods, choose Tools | Templates.
-		setAeReaderFifoSize(getChip().getPrefs().getInt("aeReaderFifoSize", 1 << 15));
-		setAeReaderNumBuffers(getChip().getPrefs().getInt("aeReaderNumBuffers", 4));
-		setTranslateRowOnlyEvents(getChip().getPrefs().getBoolean("translateRowOnlyEvents", false));
-		setAPSGuaranteedImageTransfer(getChip().getPrefs().getBoolean("apsGuaranteedImageTransfer", true));
-		setCaptureEvents(isCaptureEventsEnabled()); // just to call propertyChangeListener that sets GUI buttons
-		setDisplayEvents(isDisplayEvents()); // just to call propertyChangeListener that sets GUI buttons
-		setCaptureFramesEnabled(isCaptureFramesEnabled());
-		setDisplayFrames(isDisplayFrames()); // calls GUI update listeners
-	}
+	public void loadPreferences() {
+		super.loadPreferences();
 
-	/**
-	 * Momentarily puts the pixels and on-chip AER logic in reset and then
-	 * releases the reset.
-	 *
-	 */
-	protected void resetChip() {
-		Biasgen.log.info("resetting AER communication");
-		nChipReset.set(false);
-		nChipReset.set(true);
-	}
-
-	/**
-	 * @param aeReaderFifoSize
-	 *            the aeReaderFifoSize to set
-	 */
-	@Override
-	public void setAeReaderFifoSize(int aeReaderFifoSize) {
-		if (aeReaderFifoSize < (1 << 8)) {
-			aeReaderFifoSize = 1 << 8;
+		if (allPreferencesList != null) {
+			for (final HasPreference hp : allPreferencesList) {
+				hp.loadPreference();
+			}
 		}
-		else if (((aeReaderFifoSize) & (aeReaderFifoSize - 1)) != 0) {
-			final int newval = Integer.highestOneBit(aeReaderFifoSize - 1);
-			Biasgen.log.warning(
-				"tried to set a non-power-of-two value " + aeReaderFifoSize + "; rounding down to nearest power of two which is " + newval);
-			aeReaderFifoSize = newval;
-		}
-		this.aeReaderFifoSize = aeReaderFifoSize;
-	}
 
-	/**
-	 * @param aeReaderNumBuffers
-	 *            the aeReaderNumBuffers to set
-	 */
-	@Override
-	public void setAeReaderNumBuffers(final int aeReaderNumBuffers) {
-		this.aeReaderNumBuffers = aeReaderNumBuffers;
+		if (ssBiases != null) {
+			for (final ShiftedSourceBiasCF sSrc : ssBiases) {
+				sSrc.loadPreferences();
+			}
+		}
+
+		if (ipots != null) {
+			ipots.loadPreferences();
+		}
 	}
 
 	@Override
@@ -700,75 +634,36 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		final float MAX = 30;
 		pr.changeByRatioFromPreferred(PotTweakerUtilities.getRatioTweak(val, MAX));
 		sf.changeByRatioFromPreferred(PotTweakerUtilities.getRatioTweak(val, MAX));
-		chip.getSupport().firePropertyChange(DVSTweaks.BANDWIDTH, old, val);
+		getChip().getSupport().firePropertyChange(DVSTweaks.BANDWIDTH, old, val);
 	}
 
 	@Override
 	public void setBrightness(final float brightness) {
-		if (getVideoControl() == null) {
-			return;
-		}
 		getVideoControl().setBrightness(brightness);
 	}
 
 	@Override
 	public void setCaptureEvents(final boolean selected) {
-		if (nChipReset == null) {
-			return;
-		}
-		nChipReset.isSet();
-		nChipReset.set(selected);
-		getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_CAPTURE_EVENTS_ENABLED, null, selected); // TODO
-		// have
-		// to
-		// set null for
-		// old value
-		// because
-		// nChipReset is
-		// a bit but it
-		// is not linked
-		// to listeners
-		// like button,
-		// so when
-		// preferences
-		// are loaded
-		// and new value
-		// is set, then
-		// it may be
-		// that the
-		// button is not
-		// updated
+		dvsRun.set(selected);
 	}
 
 	@Override
 	public void setCaptureFramesEnabled(final boolean yes) {
-		if (getApsReadoutControl() == null) {
-			return;
-		}
-		getApsReadoutControl().setAdcEnabled(yes);
+		apsRun.set(yes);
 	}
 
 	@Override
 	public void setContrast(final float contrast) {
-		if (getVideoControl() == null) {
-			return;
-		}
 		getVideoControl().setContrast(contrast);
 	}
 
 	@Override
 	public void setDisplayEvents(final boolean displayEvents) {
-		if (getVideoControl() == null) {
-			return;
-		}
 		getVideoControl().setDisplayEvents(displayEvents);
 	}
 
 	@Override
 	public void setDisplayFrames(final boolean displayFrames) {
-		if (getVideoControl() == null) {
-			return;
-		}
 		getVideoControl().setDisplayFrames(displayFrames);
 	}
 
@@ -777,34 +672,27 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		getImuControl().setDisplayImu(yes);
 	}
 
-	// @Override
 	public void setExposureDelayMs(final float ms) {
 		final int expUs = (int) (ms * 1000);
-		getApsReadoutControl().setExposureDelayUS(expUs);
+		apsExposure.set(expUs);
 	}
 
-	// @Override
 	public float getExposureDelayMs() {
-		return getApsReadoutControl().getExposureDelayUS() * .001f;
+		return apsExposure.get() * .001f;
 	}
 
-	// @Override
 	public void setFrameDelayMs(final float ms) {
 		final int fdUs = (int) (ms * 1000);
-		getApsReadoutControl().setFrameDelayUS(fdUs);
+		apsFrameDelay.set(fdUs);
 	}
 
-	// @Override
 	public float getFrameDelayMs() {
-		return getApsReadoutControl().getFrameDelayUS() * .001f;
+		return apsFrameDelay.get() * .001f;
 
 	}
 
 	@Override
 	public void setGamma(final float gamma) {
-		if (getVideoControl() == null) {
-			return;
-		}
 		getVideoControl().setGamma(gamma);
 	}
 
@@ -835,7 +723,7 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		maxFiringRate = val;
 		final float MAX = 100;
 		refr.changeByRatioFromPreferred(PotTweakerUtilities.getRatioTweak(val, MAX));
-		chip.getSupport().firePropertyChange(DVSTweaks.MAX_FIRING_RATE, old, val);
+		getChip().getSupport().firePropertyChange(DVSTweaks.MAX_FIRING_RATE, old, val);
 	}
 
 	/**
@@ -859,7 +747,7 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		onOffBalance = val;
 		final float MAX = 10;
 		diff.changeByRatioFromPreferred(PotTweakerUtilities.getRatioTweak(val, MAX));
-		chip.getSupport().firePropertyChange(DVSTweaks.ON_OFF_BALANCE, old, val);
+		getChip().getSupport().firePropertyChange(DVSTweaks.ON_OFF_BALANCE, old, val);
 	}
 
 	/**
@@ -884,133 +772,31 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		threshold = val;
 		diffOn.changeByRatioFromPreferred(PotTweakerUtilities.getRatioTweak(val, MAX));
 		diffOff.changeByRatioFromPreferred(1 / PotTweakerUtilities.getRatioTweak(val, MAX));
-		chip.getSupport().firePropertyChange(DVSTweaks.THRESHOLD, old, val);
-	}
-
-	/**
-	 * If set, then row-only events are transmitted to raw packets from USB
-	 * interface
-	 *
-	 * @param translateRowOnlyEvents
-	 *            true to translate these parasitic events.
-	 */
-	@Override
-	public void setTranslateRowOnlyEvents(final boolean translateRowOnlyEvents) {
-		final boolean old = this.translateRowOnlyEvents;
-		this.translateRowOnlyEvents = translateRowOnlyEvents;
-		getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_TRANSLATE_ROW_ONLY_EVENTS, old, this.translateRowOnlyEvents);
-		if ((getHardwareInterface() != null) && (getHardwareInterface() instanceof CypressFX3)) {
-			// Translate Row-only Events is now in the logic.
-			try {
-				((CypressFX3) getHardwareInterface()).spiConfigSend(CypressFX3.FPGA_DVS, (short) 9, (translateRowOnlyEvents) ? (0) : (1));
-			}
-			catch (final HardwareInterfaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public void setExternalAERControlEnabled(final boolean externalAERControlEnabled) {
-		this.externalAERControlEnabled = externalAERControlEnabled;
-
-		if ((getHardwareInterface() != null) && (getHardwareInterface() instanceof CypressFX3)) {
-			// Translate Row-only Events is now in the logic.
-			try {
-				((CypressFX3) getHardwareInterface()).spiConfigSend(CypressFX3.FPGA_DVS, (short) 10,
-					(externalAERControlEnabled) ? (1) : (0));
-			}
-			catch (final HardwareInterfaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public void setAPSGuaranteedImageTransfer(final boolean apsGuaranteedImageTransfer) {
-		this.apsGuaranteedImageTransfer = apsGuaranteedImageTransfer;
-
-		if ((getHardwareInterface() != null) && (getHardwareInterface() instanceof CypressFX3)) {
-			try {
-				if (apsGuaranteedImageTransfer) {
-					((CypressFX3) getHardwareInterface()).spiConfigSend(CypressFX3.FPGA_APS, (short) 6, 1);
-					((CypressFX3) getHardwareInterface()).spiConfigSend(CypressFX3.FPGA_MUX, (short) 5, 0);
-				}
-				else {
-					((CypressFX3) getHardwareInterface()).spiConfigSend(CypressFX3.FPGA_APS, (short) 6, 0);
-					((CypressFX3) getHardwareInterface()).spiConfigSend(CypressFX3.FPGA_MUX, (short) 5, 1);
-				}
-			}
-			catch (final HardwareInterfaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-
-	public void setHardwareBAFilterEnabled(final boolean hardwareBAFilterEnabled) {
-		this.hardwareBAFilterEnabled = hardwareBAFilterEnabled;
-
-		if ((getHardwareInterface() != null) && (getHardwareInterface() instanceof CypressFX3)) {
-			try {
-				if (hardwareBAFilterEnabled) {
-					((CypressFX3) getHardwareInterface()).spiConfigSend(CypressFX3.FPGA_DVS, (short) 29, 1);
-				}
-				else {
-					((CypressFX3) getHardwareInterface()).spiConfigSend(CypressFX3.FPGA_DVS, (short) 29, 0);
-				}
-			}
-			catch (final HardwareInterfaceException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+		getChip().getSupport().firePropertyChange(DVSTweaks.THRESHOLD, old, val);
 	}
 
 	@Override
 	public void setUseAutoContrast(final boolean useAutoContrast) {
-		if (getVideoControl() == null) {
-			return;
-		}
 		getVideoControl().setUseAutoContrast(useAutoContrast);
 	}
 
 	@Override
-	public void storePreference() {
-		super.storePreference(); // To change body of generated methods, choose Tools | Templates.
-		getChip().getPrefs().putInt("aeReaderFifoSize", aeReaderFifoSize);
-		getChip().getPrefs().putInt("aeReaderNumBuffers", aeReaderNumBuffers);
-		getChip().getPrefs().putBoolean("translateRowOnlyEvents", translateRowOnlyEvents);
-		getChip().getPrefs().putBoolean("apsGuaranteedImageTransfer", apsGuaranteedImageTransfer);
+	public void storePreferences() {
+		for (final HasPreference hp : allPreferencesList) {
+			hp.storePreference();
+		}
+
+		for (final ShiftedSourceBiasCF sSrc : ssBiases) {
+			sSrc.storePreferences();
+		}
+
+		ipots.storePreferences();
+
+		super.storePreferences();
 	}
 
 	protected void tabbedPaneMouseClicked(final MouseEvent evt) {
-		chip.getPrefs().putInt("DavisBaseCamera.bgTabbedPaneSelectedIndex", configTabbedPane.getSelectedIndex());
-	}
-
-	protected void toggleDebugControls() {
-		if (debugControls) {
-			configPanel.remove(userFriendlyControls);
-		}
-		else {
-			configTabbedPane.remove(userFriendlyControls);
-		}
-		debugControls = !debugControls;
-		chip.getPrefs().putBoolean("debugControls", debugControls);
-		if (debugControls) {
-			configPanel.add(userFriendlyControls, BorderLayout.EAST);
-		}
-		else {
-			// user friendly control panel
-			configTabbedPane.add("User-Friendly Controls", userFriendlyControls);
-			configTabbedPane.setSelectedComponent(userFriendlyControls);
-		}
-		// try{
-		// chip.getAeViewer().getBiasgenFrame().pack();
-		// }catch(Exception e){
-		// log.warning(e.toString());
-		// } // TODO only do this after layout is compacted by use of good layout in all the tabs; otherwise the whole
-		// panel gets huge
+		getChip().getPrefs().putInt("DavisBaseCamera.bgTabbedPaneSelectedIndex", configTabbedPane.getSelectedIndex());
 	}
 
 	/**
@@ -1027,83 +813,76 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	 */
 	@Override
 	public synchronized void update(final Observable observable, final Object object) {
-		// thread safe to ensure gui cannot
-		// retrigger this while it is sending
-		// something
-		// sends a vendor request depending on type of update
-		// vendor request is always VR_CONFIG
-		// value is the type of update
-		// index is sometimes used for 16 bitmask updates
-		// bytes are the rest of data
+		// while it is sending something
 		if (isBatchEditOccurring()) {
 			return;
 		}
-		// log.info("update with " + observable);
-		try {
-			if ((observable instanceof IPot) || (observable instanceof VPot)) {
-				// must send all of the onchip shift
-				// register values to replace shift
-				// register contents
-				sendOnChipConfig();
+
+		if (getHardwareInterface() != null) {
+			final CypressFX3 fx3HwIntf = (CypressFX3) getHardwareInterface();
+
+			try {
+				if (observable instanceof AddressedIPotCF) {
+					final AddressedIPotCF iPot = (AddressedIPotCF) observable;
+
+					fx3HwIntf.spiConfigSend(CypressFX3.FPGA_CHIPBIAS, (short) iPot.getAddress(), iPot.computeCleanBinaryRepresentation());
+				}
+				else if (observable instanceof ShiftedSourceBiasCF) {
+					final ShiftedSourceBiasCF iPot = (ShiftedSourceBiasCF) observable;
+
+					fx3HwIntf.spiConfigSend(CypressFX3.FPGA_CHIPBIAS, (short) iPot.getAddress(), iPot.computeBinaryRepresentation());
+				}
+				else if (observable instanceof SPIConfigBit) {
+					final SPIConfigBit cfgBit = (SPIConfigBit) observable;
+
+					fx3HwIntf.spiConfigSend(cfgBit.getModuleAddr(), cfgBit.getParamAddr(), (cfgBit.isSet()) ? (1) : (0));
+				}
+				else if (observable instanceof SPIConfigInt) {
+					final SPIConfigInt cfgInt = (SPIConfigInt) observable;
+
+					fx3HwIntf.spiConfigSend(cfgInt.getModuleAddr(), cfgInt.getParamAddr(), cfgInt.get());
+				}
+				else {
+					super.update(observable, object); // super (Biasgen) handles others, e.g. masterbias
+				}
 			}
-			else if ((observable instanceof OutputMux) || (observable instanceof OnchipConfigBit)) {
-				sendOnChipConfigChain();
-			}
-			else if (observable instanceof ShiftedSourceBiasCF) {
-				sendOnChipConfig();
-			}
-			else if (observable instanceof ChipConfigChain) {
-				sendOnChipConfigChain();
-			}
-			else if (observable instanceof Masterbias) {
-				powerDown.set(getMasterbias().isPowerDownEnabled());
-			}
-			else if (observable instanceof TriStateablePortBit) {
-				// tristateable should come first before configbit
-				// since it is subclass
-				final TriStateablePortBit b = (TriStateablePortBit) observable;
-				final byte[] bytes = { (byte) ((b.isSet() ? (byte) 1 : (byte) 0) | (b.isHiZ() ? (byte) 2 : (byte) 0)) };
-				sendFx2ConfigCommand(CMD_SETBIT, b.getPortbit(), bytes); // sends value=CMD_SETBIT, index=portbit with
-				// (port(b=0,d=1,e=2)<<8)|bitmask(e.g.
-				// 00001000) in MSB/LSB, byte[0]= OR of
-				// value (1,0), hiZ=2/0, bit is set if
-				// tristate, unset if driving port
-			}
-			else if (observable instanceof PortBit) {
-				final PortBit b = (PortBit) observable;
-				final byte[] bytes = { b.isSet() ? (byte) 1 : (byte) 0 };
-				sendFx2ConfigCommand(CMD_SETBIT, b.getPortbit(), bytes); // sends value=CMD_SETBIT, index=portbit with
-				// (port(b=0,d=1,e=2)<<8)|bitmask(e.g.
-				// 00001000) in MSB/LSB, byte[0]=value (1,0)
-			}
-			else if (observable instanceof CPLDConfigValue) {
-				sendCPLDConfig();
-			}
-			else if (observable instanceof AddressedIPot) {
-				sendAIPot((AddressedIPot) observable);
-			}
-			else {
-				super.update(observable, object); // super (SeeBetterConfig) handles others, e.g. masterbias
+			catch (final HardwareInterfaceException e) {
+				net.sf.jaer.biasgen.Biasgen.log.warning("On update() caught " + e.toString());
 			}
 		}
-		catch (final HardwareInterfaceException e) {
-			Biasgen.log.warning("On update() caught " + e.toString());
+	}
+
+	// sends complete configuration information to multiple shift registers and off chip DACs
+	public void sendConfiguration() throws HardwareInterfaceException {
+		if (!isOpen()) {
+			open();
+		}
+
+		for (final ShiftedSourceBiasCF sSrc : ssBiases) {
+			update(sSrc, null);
+		}
+
+		for (final Pot iPot : ipots.getPots()) {
+			update(iPot, null);
+		}
+
+		for (final AbstractConfigValue spiCfg : allPreferencesList) {
+			update(spiCfg, null);
 		}
 	}
 
 	public class VideoControl extends Observable implements Observer, HasPreference, HasPropertyTooltips {
 
-		public boolean displayEvents = chip.getPrefs().getBoolean("VideoControl.displayEvents", true);
-		public boolean displayFrames = chip.getPrefs().getBoolean("VideoControl.displayFrames", true);
-		public boolean separateAPSByColor = chip.getPrefs().getBoolean("VideoControl.separateAPSByColor", false);
-		public boolean autoWhiteBalance = chip.getPrefs().getBoolean("VideoControl.autoWhiteBalance", true);
-		public boolean colorCorrection = chip.getPrefs().getBoolean("VideoControl.colorCorrection", true);
+		public boolean displayEvents = getChip().getPrefs().getBoolean("VideoControl.displayEvents", true);
+		public boolean displayFrames = getChip().getPrefs().getBoolean("VideoControl.displayFrames", true);
+		public boolean separateAPSByColor = getChip().getPrefs().getBoolean("VideoControl.separateAPSByColor", false);
+		public boolean autoWhiteBalance = getChip().getPrefs().getBoolean("VideoControl.autoWhiteBalance", true);
+		public boolean colorCorrection = getChip().getPrefs().getBoolean("VideoControl.colorCorrection", true);
 		// on crappy beamer output
 		private final PropertyTooltipSupport tooltipSupport = new PropertyTooltipSupport();
 
 		public VideoControl() {
 			super();
-			getHasPreferenceList().add(this);
 			tooltipSupport.setPropertyTooltip("displayEvents", "display DVS events");
 			tooltipSupport.setPropertyTooltip("displayFrames", "display APS frames");
 			tooltipSupport.setPropertyTooltip("useAutoContrast", "automatically set the display contrast for APS frames");
@@ -1131,9 +910,9 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		public void setDisplayFrames(final boolean displayFrames) {
 			final boolean old = this.displayFrames;
 			this.displayFrames = displayFrames;
-			chip.getPrefs().putBoolean("VideoControl.displayFrames", displayFrames);
-			if (chip.getAeViewer() != null) {
-				chip.getAeViewer().interruptViewloop();
+			getChip().getPrefs().putBoolean("VideoControl.displayFrames", displayFrames);
+			if (((AEChip) getChip()).getAeViewer() != null) {
+				((AEChip) getChip()).getAeViewer().interruptViewloop();
 			}
 			getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_DISPLAY_FRAMES_ENABLED, old, displayFrames);
 			if (old != displayFrames) {
@@ -1160,17 +939,17 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		 */
 		public void setSeparateAPSByColor(final boolean separateAPSByColor) {
 			this.separateAPSByColor = separateAPSByColor;
-			chip.getPrefs().putBoolean("VideoControl.separateAPSByColor", separateAPSByColor);
+			getChip().getPrefs().putBoolean("VideoControl.separateAPSByColor", separateAPSByColor);
 		}
 
 		public void setAutoWhiteBalance(final boolean autoWhiteBalance) {
 			this.autoWhiteBalance = autoWhiteBalance;
-			chip.getPrefs().putBoolean("VideoControl.autoWhiteBalance", autoWhiteBalance);
+			getChip().getPrefs().putBoolean("VideoControl.autoWhiteBalance", autoWhiteBalance);
 		}
 
 		public void setColorCorrection(final boolean colorCorrection) {
 			this.colorCorrection = colorCorrection;
-			chip.getPrefs().putBoolean("VideoControl.colorCorrection", colorCorrection);
+			getChip().getPrefs().putBoolean("VideoControl.colorCorrection", colorCorrection);
 		}
 
 		/**
@@ -1187,9 +966,9 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		public void setDisplayEvents(final boolean displayEvents) {
 			final boolean old = this.displayEvents;
 			this.displayEvents = displayEvents;
-			chip.getPrefs().putBoolean("VideoControl.displayEvents", displayEvents);
-			if (chip.getAeViewer() != null) {
-				chip.getAeViewer().interruptViewloop();
+			getChip().getPrefs().putBoolean("VideoControl.displayEvents", displayEvents);
+			if (((AEChip) getChip()).getAeViewer() != null) {
+				((AEChip) getChip()).getAeViewer().interruptViewloop();
 			}
 			getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_DISPLAY_EVENTS_ENABLED, old, displayEvents);
 			if (old != displayEvents) {
@@ -1256,17 +1035,14 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 
 		@Override
 		public void loadPreference() {
-			setDisplayFrames(chip.getPrefs().getBoolean("VideoControl.displayFrames", true)); // use setter to make sure
-			// GUIs are updated by
-			// property changes
-			setDisplayEvents(chip.getPrefs().getBoolean("VideoControl.displayEvents", true));
+			setDisplayFrames(getChip().getPrefs().getBoolean("VideoControl.displayFrames", true));
+			setDisplayEvents(getChip().getPrefs().getBoolean("VideoControl.displayEvents", true));
 		}
 
 		@Override
 		public void storePreference() {
-			chip.getPrefs().putBoolean("VideoControl.displayEvents", displayEvents);
-			chip.getPrefs().putBoolean("VideoControl.displayFrames", displayFrames);
-			chip.getPrefs().putBoolean("VideoControl.separateAPSByColor", separateAPSByColor);
+			getChip().getPrefs().putBoolean("VideoControl.displayEvents", displayEvents);
+			getChip().getPrefs().putBoolean("VideoControl.displayFrames", displayFrames);
 		}
 
 		@Override
@@ -1278,12 +1054,12 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		 * @return the contrastContoller
 		 */
 		public DavisVideoContrastController getContrastContoller() {
-			if (chip.getRenderer() instanceof AEFrameChipRenderer) {
-				return ((AEFrameChipRenderer) (chip.getRenderer())).getContrastController();
+			if (((AEChip) getChip()).getRenderer() instanceof AEFrameChipRenderer) {
+				return ((AEFrameChipRenderer) (((AEChip) getChip()).getRenderer())).getContrastController();
 			}
 
-			throw new RuntimeException(
-				"Cannot return a video contrast controller for the image output for the current renderer, which is " + chip.getRenderer());
+			throw new RuntimeException("Cannot return a video contrast controller for the image output for the current renderer, which is "
+				+ ((AEChip) getChip()).getRenderer());
 		}
 	}
 
@@ -1303,290 +1079,56 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 	}
 
 	/**
-	 * @return the apsReadoutControl
-	 */
-	public DavisConfig.ApsReadoutControl getApsReadoutControl() {
-		return apsReadoutControl;
-	}
-
-	/**
 	 * @return the imuControl
 	 */
 	public ImuControl getImuControl() {
-		return imuControl;
+		return imuControlGUI;
 	}
 
 	/**
 	 * @return the exposureControlRegister
 	 */
-	public CPLDInt getExposureControlRegister() {
-		return exposureControlRegister;
+	public SPIConfigInt getExposureControlRegister() {
+		return apsExposure;
 	}
 
 	/**
 	 * @return the frameDelayControlRegister
 	 */
-	public CPLDInt getFrameDelayControlRegister() {
-		return frameDelayControlRegister;
-	}
-
-	/**
-	 * Formats bits represented in a string as '0' or '1' as a byte array to be
-	 * sent over the interface to the firmware, for loading in big endian bit
-	 * order, in order of the bytes sent starting with byte 0.
-	 * <p>
-	 * Because the firmware writes integral bytes it is important that the bytes sent to the device are padded with
-	 * leading bits (at msbs of first byte) that are finally shifted out of the on-chip shift register.
-	 *
-	 * Therefore <code>bitString2Bytes</code> should only be called ONCE, after the complete bit string has been
-	 * assembled, unless it is known the other bits are an integral number of bytes.
-	 *
-	 * @param bitString
-	 *            in msb to lsb order from left end, where msb will be in
-	 *            msb of first output byte
-	 * @return array of bytes to send
-	 */
-
-	@Override
-	public String getBitString() {
-		// System.out.print("dig muxes ");
-		final String dMuxBits = getMuxBitString(dmuxes);
-		// System.out.print("config bits ");
-		final String configBitString = getConfigBitString();
-		// System.out.print("analog muxes ");
-		final String aMuxBits = getMuxBitString(amuxes);
-		// System.out.print("bias muxes ");
-		final String bMuxBits = getMuxBitString(bmuxes);
-
-		final String chipConfigChainString = (dMuxBits + configBitString + aMuxBits + bMuxBits);
-		// System.out.println("On chip config chain: "+chipConfigChain);
-
-		return chipConfigChainString; // returns bytes padded at end
-	}
-
-	String getMuxBitString(final OutputMux[] muxs) {
-		final StringBuilder s = new StringBuilder();
-		for (final OutputMux m : muxs) {
-			s.append(m.getBitString());
-		}
-		// System.out.println(s);
-		return s.toString();
-	}
-
-	String getConfigBitString() {
-		final StringBuilder s = new StringBuilder();
-		for (int i = 0; i < (TOTAL_CONFIG_BITS - getConfigBits().length); i++) {
-			s.append("0");
-		}
-		for (int i = getConfigBits().length - 1; i >= 0; i--) {
-			if (getConfigBits()[i] != null) {
-				s.append(getConfigBits()[i].isSet() ? "1" : "0");
-			}
-			else {
-				s.append("0");
-			}
-		}
-		// System.out.println(s);
-		return s.toString();
-	}
-
-	@Override
-	public MuxControlPanel buildMuxControlPanel() {
-		return new MuxControlPanel(muxes);
-	}
-
-	@Override
-	public JPanel getChipConfigPanel() {
-		final JPanel chipConfigPanel = new JPanel();
-		chipConfigPanel.setLayout(new BoxLayout(chipConfigPanel, BoxLayout.Y_AXIS));
-
-		// On-Chip config bits
-		final JPanel extraPanel = new JPanel();
-		extraPanel.setLayout(new BoxLayout(extraPanel, BoxLayout.Y_AXIS));
-		for (final OnchipConfigBit b : getConfigBits()) {
-			if (b != null) {
-				extraPanel.add(new JRadioButton(b.getAction()));
-			}
-		}
-		extraPanel.setBorder(new TitledBorder("Extra on-chip bits"));
-		chipConfigPanel.add(extraPanel);
-
-		// FX2 port bits
-		final JPanel portBitsPanel = new JPanel();
-		portBitsPanel.setLayout(new BoxLayout(portBitsPanel, BoxLayout.Y_AXIS));
-		for (final PortBit p : portBits) {
-			portBitsPanel.add(new JRadioButton(p.getAction()));
-		}
-		portBitsPanel.setBorder(new TitledBorder("Cypress FX2 port bits"));
-		chipConfigPanel.add(portBitsPanel);
-
-		final JPanel miscControlBitsPanel = new JPanel();
-		miscControlBitsPanel.setLayout(new BoxLayout(miscControlBitsPanel, BoxLayout.Y_AXIS));
-		final JLabel miscControlBitsLabel = new JLabel(HexString.toString(miscControlBits.get()));
-		miscControlBitsPanel.add(miscControlBitsLabel);
-		miscControlBitsPanel.setBorder(new TitledBorder("miscControlBits"));
-		chipConfigPanel.add(miscControlBitsPanel);
-		miscControlBits.addObserver(new Observer() {
-
-			@Override
-			public void update(final Observable o, final Object o1) {
-				miscControlBitsLabel.setText(HexString.toString(miscControlBits.get()));
-			}
-		});
-
-		// event translation control
-		final JPanel eventTranslationControlPanel = new JPanel();
-		eventTranslationControlPanel.setBorder(new TitledBorder("DVS event translation control"));
-		eventTranslationControlPanel.setLayout(new BoxLayout(eventTranslationControlPanel, BoxLayout.Y_AXIS));
-		// add a reset button on top of everything
-		final Action translateRowOnlyEventsAction = new AbstractAction("Translate row-only events") {
-			{
-				putValue(Action.SHORT_DESCRIPTION,
-					"<html>Controls whether row-only events (row request but no column request) "
-						+ "<br>are captured from USB data stream in ApsDvsHardwareInterface. "
-						+ "<p>These events are rendered as OFF events at x=239");
-				putValue(Action.SELECTED_KEY, translateRowOnlyEvents);
-			}
-
-			@Override
-			public void actionPerformed(final ActionEvent evt) {
-				setTranslateRowOnlyEvents(!isTranslateRowOnlyEvents());
-			}
-		};
-		final JRadioButton translateRowOnlyEventsButton = new JRadioButton(translateRowOnlyEventsAction);
-		eventTranslationControlPanel.add(translateRowOnlyEventsButton);
-		getSupport().addPropertyChangeListener(DavisDisplayConfigInterface.PROPERTY_TRANSLATE_ROW_ONLY_EVENTS,
-			new PropertyChangeListener() {
-
-				@Override
-				public void propertyChange(final PropertyChangeEvent evt) {
-					translateRowOnlyEventsButton.setSelected((boolean) evt.getNewValue());
-				}
-			});
-		chipConfigPanel.add(eventTranslationControlPanel);
-
-		// External AER control panel (CAVIAR)
-		final JPanel externalAERControlPanel = new JPanel();
-		externalAERControlPanel.setBorder(new TitledBorder("DVS external AER control"));
-		externalAERControlPanel.setLayout(new BoxLayout(externalAERControlPanel, BoxLayout.Y_AXIS));
-
-		final Action externalAERControlAction = new AbstractAction("Enable external AER Control") {
-			{
-				putValue(Action.SHORT_DESCRIPTION,
-					"<html>Control wheter AER ACK is controlled by our logic or external systems like CAVIAR.");
-				putValue(Action.SELECTED_KEY, externalAERControlEnabled);
-			}
-
-			@Override
-			public void actionPerformed(final ActionEvent evt) {
-				setExternalAERControlEnabled(!isExternalAERControlEnabled());
-			}
-		};
-		final JRadioButton externalAERControlButton = new JRadioButton(externalAERControlAction);
-		externalAERControlPanel.add(externalAERControlButton);
-
-		chipConfigPanel.add(externalAERControlPanel);
-
-		// APS Guaranteed Image Transfer control panel
-		final JPanel apsGuaranteedImageTransferPanel = new JPanel();
-		apsGuaranteedImageTransferPanel.setBorder(new TitledBorder("APS Guaranteed Image Transfer"));
-		apsGuaranteedImageTransferPanel.setLayout(new BoxLayout(apsGuaranteedImageTransferPanel, BoxLayout.Y_AXIS));
-
-		final Action apsGuaranteedImageTransferAction = new AbstractAction("Ensure APS data transfer") {
-			{
-				putValue(Action.SHORT_DESCRIPTION,
-					"<html>Ensure APS data is never dropped when going through logic and FIFO buffers; <br>frames can still be dropped if packet rendering max size is exceeded <br>(see option USB/Set rendering AE packet size).");
-				putValue(Action.SELECTED_KEY, apsGuaranteedImageTransfer);
-			}
-
-			@Override
-			public void actionPerformed(final ActionEvent evt) {
-				setAPSGuaranteedImageTransfer(!isAPSGuaranteedImageTransfer());
-			}
-		};
-		final JRadioButton apsGuaranteedImageTransferButton = new JRadioButton(apsGuaranteedImageTransferAction);
-		apsGuaranteedImageTransferPanel.add(apsGuaranteedImageTransferButton);
-
-		chipConfigPanel.add(apsGuaranteedImageTransferPanel);
-
-		// External, hardware BA filter control panel
-		final JPanel hardwareBAFilterEnabledPanel = new JPanel();
-		hardwareBAFilterEnabledPanel.setBorder(new TitledBorder("Hardware BA Filter"));
-		hardwareBAFilterEnabledPanel.setLayout(new BoxLayout(hardwareBAFilterEnabledPanel, BoxLayout.Y_AXIS));
-
-		final Action hardwareBAFilterEnabledAction = new AbstractAction("Enable hardware BA filter") {
-			{
-				putValue(Action.SHORT_DESCRIPTION,
-					"<html>Enable hardware background-activity filter (FX3 boards only. Logic or AERCorrFilter).");
-				putValue(Action.SELECTED_KEY, hardwareBAFilterEnabled);
-			}
-
-			@Override
-			public void actionPerformed(final ActionEvent evt) {
-				setHardwareBAFilterEnabled(!isHardwareBAFilterEnabled());
-			}
-		};
-		final JRadioButton hardwareBAFilterEnabledButton = new JRadioButton(hardwareBAFilterEnabledAction);
-		hardwareBAFilterEnabledPanel.add(hardwareBAFilterEnabledButton);
-
-		chipConfigPanel.add(hardwareBAFilterEnabledPanel);
-
-		return chipConfigPanel;
+	public SPIConfigInt getFrameDelayControlRegister() {
+		return apsFrameDelay;
 	}
 
 	@Override
 	public boolean isSeparateAPSByColor() {
-		if (getVideoControl() == null) {
-			return false;
-		}
-
 		return getVideoControl().isSeparateAPSByColor();
 	}
 
 	@Override
 	public boolean isAutoWhiteBalance() {
-		if (getVideoControl() == null) {
-			return false;
-		}
-
 		return getVideoControl().isAutoWhiteBalance();
 	}
 
 	@Override
 	public boolean isColorCorrection() {
-		if (getVideoControl() == null) {
-			return false;
-		}
-
 		return getVideoControl().isColorCorrection();
 	}
 
 	@Override
 	public boolean isGlobalShutter() {
-		if (getApsReadoutControl() == null) {
-			return false;
-		}
-
-		return getApsReadoutControl().isGlobalShutterMode();
+		return globalShutter.isSet();
 	}
 
 	@Override
 	public void setSeparateAPSByColor(final boolean yes) {
-		if (getVideoControl() == null) {
-			return;
-		}
 		getVideoControl().setSeparateAPSByColor(yes);
 	}
 
 	public void setAutoWhiteBalance(final boolean yes) {
-		if (getVideoControl() == null) {
-			return;
-		}
 		getVideoControl().setAutoWhiteBalance(yes);
 	}
 
-	static final protected AddressedIPotCF addAIPot(final AddressedIPotArray potArray, final Biasgen biasgen, final String s)
-		throws ParseException {
+	static final protected AddressedIPotCF addAIPot(final AddressedIPotArray potArray, final Biasgen biasgen, final String s) {
 		AddressedIPotCF ret = null;
 
 		try {
@@ -1637,5 +1179,93 @@ public class DavisConfig extends Biasgen implements HasPreference, DavisDisplayC
 		}
 
 		return (ret);
+	}
+
+	private static final int TF_MAX_HEIGHT = 15;
+	private static final int TF_HEIGHT = 6;
+	private static final int TF_MIN_W = 15, TF_PREF_W = 20, TF_MAX_W = 40;
+
+	private void makeSPIBitConfig(final SPIConfigBit bitVal, final JPanel panel) {
+		final JRadioButton but = new JRadioButton("<html>" + bitVal.getName() + ": " + bitVal.getDescription());
+		but.setToolTipText("<html>" + bitVal.toString() + "<br>Select to set bit, clear to clear bit.");
+		but.setSelected(bitVal.isSet());
+		but.setAlignmentX(Component.LEFT_ALIGNMENT);
+		but.addActionListener(new SPIConfigBitAction(bitVal));
+
+		panel.add(but);
+		configValueMap.put(bitVal, but);
+		bitVal.addObserver(this);
+	}
+
+	private void makeSPIIntConfig(final SPIConfigInt intVal, final JPanel panel) {
+		final JPanel pan = new JPanel();
+		pan.setAlignmentX(Component.LEFT_ALIGNMENT);
+		pan.setLayout(new BoxLayout(pan, BoxLayout.X_AXIS));
+
+		final JLabel label = new JLabel(intVal.getName());
+		label.setToolTipText("<html>" + intVal.toString() + "<br>" + intVal.getDescription()
+			+ "<br>Enter value or use mouse wheel or arrow keys to change value.");
+		pan.add(label);
+
+		final JTextField tf = new JTextField();
+		tf.setText(Integer.toString(intVal.get()));
+		tf.setPreferredSize(new Dimension(TF_PREF_W, TF_HEIGHT));
+		tf.setMaximumSize(new Dimension(TF_MAX_W, TF_MAX_HEIGHT));
+		tf.addActionListener(new SPIConfigIntAction(intVal));
+		pan.add(tf);
+
+		panel.add(pan);
+		configValueMap.put(intVal, tf);
+		intVal.addObserver(this);
+	}
+
+	private class SPIConfigBitAction implements ActionListener {
+
+		private final SPIConfigBit bitConfig;
+
+		SPIConfigBitAction(final SPIConfigBit bitCfg) {
+			bitConfig = bitCfg;
+		}
+
+		@Override
+		public void actionPerformed(final ActionEvent e) {
+			final JRadioButton button = (JRadioButton) e.getSource();
+			bitConfig.set(button.isSelected());
+			setFileModified();
+		}
+	}
+
+	private class SPIConfigIntAction implements ActionListener {
+
+		private final SPIConfigInt intConfig;
+
+		SPIConfigIntAction(final SPIConfigInt intCfg) {
+			intConfig = intCfg;
+		}
+
+		@Override
+		public void actionPerformed(final ActionEvent e) {
+			final JTextField tf = (JTextField) e.getSource();
+
+			try {
+				intConfig.set(Integer.parseInt(tf.getText()));
+				setFileModified();
+
+				tf.setBackground(Color.white);
+			}
+			catch (final Exception ex) {
+				tf.selectAll();
+				tf.setBackground(Color.red);
+
+				log.warning(ex.toString());
+			}
+		}
+	}
+
+	private void setFileModified() {
+		if ((((AEChip) getChip()) != null) && (((AEChip) getChip()).getAeViewer() != null)
+			&& (((AEChip) getChip()).getAeViewer().getBiasgenFrame() != null)) {
+			((AEChip) getChip()).getAeViewer().getBiasgenFrame().setFileModified(true);
+		}
 	}
 }

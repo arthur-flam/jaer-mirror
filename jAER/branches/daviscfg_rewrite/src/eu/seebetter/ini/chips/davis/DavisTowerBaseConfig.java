@@ -9,7 +9,6 @@ import java.util.Observable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import ch.unizh.ini.jaer.config.onchip.OnchipConfigBit;
 import eu.seebetter.ini.chips.davis.imu.ImuControl;
 import net.sf.jaer.biasgen.AddressedIPotArray;
 import net.sf.jaer.biasgen.Biasgen;

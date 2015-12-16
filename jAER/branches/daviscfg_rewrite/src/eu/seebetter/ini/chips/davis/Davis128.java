@@ -253,7 +253,7 @@ public class Davis128 extends DavisBaseCamera {
 					if (pixFirst && (readoutType == ApsDvsEventRGBW.ReadoutType.ResetRead)) {
 						createApsFlagEvent(outItr, ApsDvsEventRGBW.ReadoutType.SOF, timestamp);
 
-						if (!getDavisConfig().getApsReadoutControl().isGlobalShutterMode()) {
+						if (!getDavisConfig().isGlobalShutter()) {
 							// rolling shutter start of exposureControlRegister (SOE)
 							createApsFlagEvent(outItr, ApsDvsEventRGBW.ReadoutType.SOE, timestamp);
 							frameIntervalUs = timestamp - frameExposureStartTimestampUs;
@@ -262,7 +262,7 @@ public class Davis128 extends DavisBaseCamera {
 					}
 
 					if (pixLast && (readoutType == ApsDvsEvent.ReadoutType.ResetRead)
-						&& getDavisConfig().getApsReadoutControl().isGlobalShutterMode()) {
+						&& getDavisConfig().isGlobalShutter()) {
 						// global shutter start of exposureControlRegister (SOE)
 						createApsFlagEvent(outItr, ApsDvsEvent.ReadoutType.SOE, timestamp);
 						frameIntervalUs = timestamp - frameExposureStartTimestampUs;

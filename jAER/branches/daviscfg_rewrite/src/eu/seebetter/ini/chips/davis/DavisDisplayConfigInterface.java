@@ -110,40 +110,4 @@ public interface DavisDisplayConfigInterface extends DvsDisplayConfigInterface {
 	 * @return true if enabled
 	 */
 	public boolean isCaptureEventsEnabled();
-
-	/**
-	 * @return the aeReaderFifoSize
-	 */
-	public int getAeReaderFifoSize();
-
-	/**
-	 * @param aeReaderFifoSize
-	 *            the aeReaderFifoSize to set
-	 */
-	public void setAeReaderFifoSize(int aeReaderFifoSize);
-
-	/**
-	 * @return the aeReaderNumBuffers
-	 */
-	public int getAeReaderNumBuffers();
-
-	/**
-	 * @param aeReaderNumBuffers
-	 *            the aeReaderNumBuffers to set
-	 */
-	public void setAeReaderNumBuffers(int aeReaderNumBuffers);
-
-	/**
-	 * If set, then row-only events are transmitted to raw packets from USB
-	 * interface
-	 *
-	 * @param translateRowOnlyEvents
-	 *            true to translate these parasitic events.
-	 */
-	public void setTranslateRowOnlyEvents(boolean translateRowOnlyEvents);
-
-	public boolean isTranslateRowOnlyEvents();
-
-	// abstract public float getAutoContrastTimeconstantMs();
-	// abstract public float setAutoContrastTimeconstantMs(float ms);
 }
