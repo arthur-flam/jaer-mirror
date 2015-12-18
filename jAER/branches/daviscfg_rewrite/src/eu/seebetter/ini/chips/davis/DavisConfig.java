@@ -295,22 +295,22 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		// Chip diagnostic chain
-		chipControl.add(new SPIConfigBit("DigitalMux0", "Digital multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 128, true,
+		chipControl.add(new SPIConfigInt("DigitalMux0", "Digital multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 128, 4, 0,
 			chip.getPrefs()));
-		chipControl.add(new SPIConfigBit("DigitalMux1", "Digital multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 129, true,
+		chipControl.add(new SPIConfigInt("DigitalMux1", "Digital multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 129, 4, 0,
 			chip.getPrefs()));
-		chipControl.add(new SPIConfigBit("DigitalMux2", "Digital multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 130, true,
+		chipControl.add(new SPIConfigInt("DigitalMux2", "Digital multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 130, 4, 0,
 			chip.getPrefs()));
-		chipControl.add(new SPIConfigBit("DigitalMux3", "Digital multiplexer 3 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 131, true,
+		chipControl.add(new SPIConfigInt("DigitalMux3", "Digital multiplexer 3 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 131, 4, 0,
 			chip.getPrefs()));
 		chipControl.add(
-			new SPIConfigBit("AnalogMux0", "Analog multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 132, true, chip.getPrefs()));
+			new SPIConfigInt("AnalogMux0", "Analog multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 132, 4, 0, chip.getPrefs()));
 		chipControl.add(
-			new SPIConfigBit("AnalogMux1", "Analog multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 133, true, chip.getPrefs()));
+			new SPIConfigInt("AnalogMux1", "Analog multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 133, 4, 0, chip.getPrefs()));
 		chipControl.add(
-			new SPIConfigBit("AnalogMux2", "Analog multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 134, true, chip.getPrefs()));
+			new SPIConfigInt("AnalogMux2", "Analog multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 134, 4, 0, chip.getPrefs()));
 		chipControl
-			.add(new SPIConfigBit("BiasMux0", "Bias multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 135, true, chip.getPrefs()));
+			.add(new SPIConfigInt("BiasMux0", "Bias multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 135, 4, 0, chip.getPrefs()));
 
 		chipControl.add(new SPIConfigBit("ResetCalibNeuron", "Turn off the integrate and fire calibration neuron (bias generator).",
 			CypressFX3.FPGA_CHIPBIAS, (short) 136, true, chip.getPrefs()));
