@@ -29,7 +29,6 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
@@ -65,22 +64,22 @@ import net.sf.jaer.util.PropertyTooltipSupport;
  */
 public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface, DavisTweaks, ChipControlPanel {
 	// All preferences, excluding biases.
-	private final List<AbstractConfigValue> allPreferencesList = new ArrayList<>();
+	protected final List<AbstractConfigValue> allPreferencesList = new ArrayList<>();
 
 	private final Map<SPIConfigValue, JComponent> configValueMap = new HashMap<>();
 
 	// Preferences by category.
-	final List<SPIConfigValue> muxControl = new ArrayList<>();
-	final List<SPIConfigValue> dvsControl = new ArrayList<>();
-	final List<SPIConfigValue> apsControl = new ArrayList<>();
-	final List<SPIConfigValue> imuControl = new ArrayList<>();
-	final List<SPIConfigValue> extInControl = new ArrayList<>();
-	final List<SPIConfigValue> chipControl = new ArrayList<>();
+	protected final List<SPIConfigValue> muxControl = new ArrayList<>();
+	protected final List<SPIConfigValue> dvsControl = new ArrayList<>();
+	protected final List<SPIConfigValue> apsControl = new ArrayList<>();
+	protected final List<SPIConfigValue> imuControl = new ArrayList<>();
+	protected final List<SPIConfigValue> extInControl = new ArrayList<>();
+	protected final List<SPIConfigValue> chipControl = new ArrayList<>();
 
 	// All bias types.
-	final AddressedIPotArray ipots = new AddressedIPotArray(this);
-	final ShiftedSourceBiasCF[] ssBiases = new ShiftedSourceBiasCF[2];
-	final ShiftedSourceBiasCF ssp, ssn;
+	protected AddressedIPotArray ipots;
+	protected final ShiftedSourceBiasCF[] ssBiases = new ShiftedSourceBiasCF[2];
+	protected final ShiftedSourceBiasCF ssp, ssn;
 
 	// these pots for DVSTweaks
 	protected AddressedIPotCF diffOn, diffOff, refr, pr, sf, diff;
@@ -101,26 +100,28 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		getMasterbias().setWOverL(4.8f / 2.4f); // masterbias has nfet with w/l=2 at output
 		getMasterbias().addObserver(this); // changes to masterbias come back to update() here
 
-		diff = addAIPot(ipots, this, "DiffBn,0,n,normal,differencing amp");
-		diffOn = addAIPot(ipots, this, "OnBn,1,n,normal,DVS brighter threshold");
-		diffOff = addAIPot(ipots, this, "OffBn,2,n,normal,DVS darker threshold");
-		addAIPot(ipots, this, "ApsCasEpc,3,p,cascode,cascode between APS und DVS");
-		addAIPot(ipots, this, "DiffCasBnc,4,n,cascode,differentiator cascode bias");
-		addAIPot(ipots, this, "ApsROSFBn,5,n,normal,APS readout source follower bias");
-		addAIPot(ipots, this, "LocalBufBn,6,n,normal,Local buffer bias");
-		addAIPot(ipots, this, "PixInvBn,7,n,normal,Pixel request inversion static inverter bias");
-		pr = addAIPot(ipots, this, "PrBp,8,p,normal,Photoreceptor bias current");
-		sf = addAIPot(ipots, this, "PrSFBp,9,p,normal,Photoreceptor follower bias current (when used in pixel type)");
-		refr = addAIPot(ipots, this, "RefrBp,10,p,normal,DVS refractory period current");
-		addAIPot(ipots, this, "AEPdBn,11,n,normal,Request encoder pulldown static current");
-		addAIPot(ipots, this, "LcolTimeoutBn,12,n,normal,No column request timeout");
-		addAIPot(ipots, this, "AEPuXBp,13,p,normal,AER column pullup");
-		addAIPot(ipots, this, "AEPuYBp,14,p,normal,AER row pullup");
-		addAIPot(ipots, this, "IFThrBn,15,n,normal,Integrate and fire intensity neuron threshold");
-		addAIPot(ipots, this, "IFRefrBn,16,n,normal,Integrate and fire intensity neuron refractory period bias current");
-		addAIPot(ipots, this, "PadFollBn,17,n,normal,Follower-pad buffer bias current");
-		addAIPot(ipots, this, "apsOverflowLevel,18,n,normal,special overflow level bias ");
-		addAIPot(ipots, this, "biasBuffer,19,n,normal,special buffer bias ");
+		ipots = new AddressedIPotArray(this);
+
+		diff = DavisConfig.addAIPot(ipots, this, "DiffBn,0,n,normal,differencing amp");
+		diffOn = DavisConfig.addAIPot(ipots, this, "OnBn,1,n,normal,DVS brighter threshold");
+		diffOff = DavisConfig.addAIPot(ipots, this, "OffBn,2,n,normal,DVS darker threshold");
+		DavisConfig.addAIPot(ipots, this, "ApsCasEpc,3,p,cascode,cascode between APS und DVS");
+		DavisConfig.addAIPot(ipots, this, "DiffCasBnc,4,n,cascode,differentiator cascode bias");
+		DavisConfig.addAIPot(ipots, this, "ApsROSFBn,5,n,normal,APS readout source follower bias");
+		DavisConfig.addAIPot(ipots, this, "LocalBufBn,6,n,normal,Local buffer bias");
+		DavisConfig.addAIPot(ipots, this, "PixInvBn,7,n,normal,Pixel request inversion static inverter bias");
+		pr = DavisConfig.addAIPot(ipots, this, "PrBp,8,p,normal,Photoreceptor bias current");
+		sf = DavisConfig.addAIPot(ipots, this, "PrSFBp,9,p,normal,Photoreceptor follower bias current (when used in pixel type)");
+		refr = DavisConfig.addAIPot(ipots, this, "RefrBp,10,p,normal,DVS refractory period current");
+		DavisConfig.addAIPot(ipots, this, "AEPdBn,11,n,normal,Request encoder pulldown static current");
+		DavisConfig.addAIPot(ipots, this, "LcolTimeoutBn,12,n,normal,No column request timeout");
+		DavisConfig.addAIPot(ipots, this, "AEPuXBp,13,p,normal,AER column pullup");
+		DavisConfig.addAIPot(ipots, this, "AEPuYBp,14,p,normal,AER row pullup");
+		DavisConfig.addAIPot(ipots, this, "IFThrBn,15,n,normal,Integrate and fire intensity neuron threshold");
+		DavisConfig.addAIPot(ipots, this, "IFRefrBn,16,n,normal,Integrate and fire intensity neuron refractory period bias current");
+		DavisConfig.addAIPot(ipots, this, "PadFollBn,17,n,normal,Follower-pad buffer bias current");
+		DavisConfig.addAIPot(ipots, this, "apsOverflowLevel,18,n,normal,special overflow level bias ");
+		DavisConfig.addAIPot(ipots, this, "biasBuffer,19,n,normal,special buffer bias ");
 
 		setPotArray(ipots);
 
@@ -179,6 +180,8 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 			true, chip.getPrefs()));
 		dvsControl.add(new SPIConfigBit("ExternalAERControl", "Don't drive AER ACK pin from FPGA (also must disable Event Capture).",
 			CypressFX3.FPGA_DVS, (short) 10, false, chip.getPrefs()));
+
+		// TODO: new boards only.
 		dvsControl.add(new SPIConfigBit("FilterBackgroundActivity", "Filter background events using hardware filter.", CypressFX3.FPGA_DVS,
 			(short) 29, false, chip.getPrefs()));
 		dvsControl.add(new SPIConfigInt("FilterBackgroundActivityDeltaTime", "Hardware background events filter delta time (in µs).",
@@ -215,22 +218,27 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		apsControl.add(
 			new SPIConfigInt("NullSettle", "Set null settle time (in cycles).", CypressFX3.FPGA_APS, (short) 18, 5, 3, chip.getPrefs()));
 
-		// TODO: new chips only.
-		apsControl.add(new SPIConfigBit("UseInternalADC", "Use the on-chip ADC instead of the external TI ADC.", CypressFX3.FPGA_APS,
-			(short) 34, true, chip.getPrefs()));
-		apsControl
-			.add(new SPIConfigBit("SampleEnable", "Enable Sample&Hold circuitry.", CypressFX3.FPGA_APS, (short) 35, true, chip.getPrefs()));
-		apsControl.add(
-			new SPIConfigInt("SampleSettle", "Sample hold time (in cycles).", CypressFX3.FPGA_APS, (short) 36, 8, 30, chip.getPrefs()));
-		apsControl
-			.add(new SPIConfigInt("RampReset", "Ramp reset time (in cycles).", CypressFX3.FPGA_APS, (short) 37, 8, 10, chip.getPrefs()));
-		apsControl.add(new SPIConfigBit("RampShortReset", "Only go through half the ramp for reset read.", CypressFX3.FPGA_APS, (short) 38,
-			false, chip.getPrefs()));
-
 		for (final SPIConfigValue cfgVal : apsControl) {
 			cfgVal.addObserver(this);
 			allPreferencesList.add(cfgVal);
 		}
+
+		// Global shutter is special, as in there is often also a chip config bit that needs to be kept in sync.
+		globalShutter.addObserver(new Observer() {
+			@Override
+			public void update(final Observable gsObs, final Object arg) {
+				final CypressFX3 fx3HwIntf = (CypressFX3) getHardwareInterface();
+
+				try {
+					final SPIConfigBit gsBit = (SPIConfigBit) gsObs;
+
+					fx3HwIntf.spiConfigSend(CypressFX3.FPGA_CHIPBIAS, (short) 142, (gsBit.isSet()) ? (1) : (0));
+				}
+				catch (final HardwareInterfaceException e) {
+					net.sf.jaer.biasgen.Biasgen.log.warning("On GS update() caught " + e.toString());
+				}
+			}
+		});
 
 		// IMU module
 		imuControl.add(new SPIConfigBit("Run", "Enable IMU.", CypressFX3.FPGA_IMU, (short) 0, false, chip.getPrefs()));
@@ -326,7 +334,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		videoControl.addObserver(this);
 
 		// imuControl
-		imuControlGUI = new ImuControl(this);
+		imuControlGUI = new ImuControl(this, imuControl);
 
 		setBatchEditOccurring(true);
 		loadPreferences();
@@ -336,13 +344,9 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 			sendConfiguration(this);
 		}
 		catch (final HardwareInterfaceException ex) {
-			log.log(Level.SEVERE, null, ex);
+			Biasgen.log.log(Level.SEVERE, null, ex);
 		}
 	}
-
-	// New SeeBetterLogic.
-	public static final byte VR_CHIP_BIAS = (byte) 0xC0;
-	public static final byte VR_CHIP_DIAG = (byte) 0xC1;
 
 	public static final String PROPERTY_EXPOSURE_DELAY_US = "PROPERTY_EXPOSURE_DELAY_US";
 	public static final String PROPERTY_FRAME_DELAY_US = "PROPERTY_FRAME_DELAY_US";
@@ -375,9 +379,6 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		configPanel = new JPanel();
 		configPanel.setLayout(new BorderLayout());
 
-		final JScrollPane scrollPane = new JScrollPane();
-		scrollPane.add(configPanel);
-
 		configTabbedPane = new JTabbedPane();
 		userFriendlyControls = new DavisUserControlPanel(getChip());
 		configTabbedPane.addTab("<html><strong><font color=\"red\">User-Friendly Controls", userFriendlyControls);
@@ -388,8 +389,8 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 			.add(new JLabel("<html>Low-level control of on-chip bias currents and voltages. <p>These are only for experts!"));
 		combinedBiasShiftedSourcePanel.setLayout(new BoxLayout(combinedBiasShiftedSourcePanel, BoxLayout.Y_AXIS));
 		combinedBiasShiftedSourcePanel.add(super.buildControlPanel());
-		combinedBiasShiftedSourcePanel.add(new ShiftedSourceControlsCF(ssn));
 		combinedBiasShiftedSourcePanel.add(new ShiftedSourceControlsCF(ssp));
+		combinedBiasShiftedSourcePanel.add(new ShiftedSourceControlsCF(ssn));
 		configTabbedPane.addTab("Bias Current Config", combinedBiasShiftedSourcePanel);
 
 		// Multiplexer
@@ -491,6 +492,8 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		getVideoControl().getContrastContoller().addObserver(videoParameterControlPanel);
 
 		// only select panel after all added
+		configPanel.add(configTabbedPane, BorderLayout.CENTER);
+
 		try {
 			configTabbedPane.setSelectedIndex(getChip().getPrefs().getInt("DavisBaseCamera.bgTabbedPaneSelectedIndex", 0));
 		}
@@ -1119,6 +1122,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		return globalShutter.isSet();
 	}
 
+	public void setGlobalShutter(final boolean val) {
+		globalShutter.set(val);
+	}
+
 	@Override
 	public void setSeparateAPSByColor(final boolean yes) {
 		getVideoControl().setSeparateAPSByColor(yes);
@@ -1129,23 +1136,23 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 	}
 
 	static final protected AddressedIPotCF addAIPot(final AddressedIPotArray potArray, final Biasgen biasgen, final String s) {
-		AddressedIPotCF ret = null;
+		final AddressedIPotCF ret = null;
 
 		try {
-			String delim = ",";
-			StringTokenizer t = new StringTokenizer(s, delim);
+			final String delim = ",";
+			final StringTokenizer t = new StringTokenizer(s, delim);
 
 			if (t.countTokens() != 5) {
 				throw new Error("only " + t.countTokens() + " tokens in pot " + s
 					+ "; use , to separate tokens for name,address,sex,type,tooltip\nsex=n|p, type=normal|cascode");
 			}
 
-			String name = t.nextToken();
+			final String name = t.nextToken();
 
-			String addressT = t.nextToken();
-			int address = Integer.parseInt(addressT);
+			final String addressT = t.nextToken();
+			final int address = Integer.parseInt(addressT);
 
-			String sexT = t.nextToken();
+			final String sexT = t.nextToken();
 			Pot.Sex sex = null;
 			if (sexT.equalsIgnoreCase("n")) {
 				sex = Pot.Sex.N;
@@ -1157,7 +1164,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 				throw new ParseException(s, s.lastIndexOf(sexT));
 			}
 
-			String typeT = t.nextToken();
+			final String typeT = t.nextToken();
 			Pot.Type type = null;
 			if (typeT.equalsIgnoreCase("normal")) {
 				type = Pot.Type.NORMAL;
@@ -1169,12 +1176,12 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 				throw new ParseException(s, s.lastIndexOf(typeT));
 			}
 
-			String tooltip = t.nextToken();
+			final String tooltip = t.nextToken();
 
 			potArray.addPot(new AddressedIPotCF(biasgen, name, address, type, sex, false, true, AddressedIPotCF.maxCoarseBitValue / 2,
 				AddressedIPotCF.maxFineBitValue, (address + 1), tooltip));
 		}
-		catch (Exception e) {
+		catch (final Exception e) {
 			throw new Error(e.toString());
 		}
 
@@ -1183,7 +1190,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 	private static final int TF_MAX_HEIGHT = 15;
 	private static final int TF_HEIGHT = 6;
-	private static final int TF_MIN_W = 15, TF_PREF_W = 20, TF_MAX_W = 40;
+	private static final int TF_PREF_W = 20, TF_MAX_W = 40;
 
 	private void makeSPIBitConfig(final SPIConfigBit bitVal, final JPanel panel) {
 		final JRadioButton but = new JRadioButton("<html>" + bitVal.getName() + ": " + bitVal.getDescription());
@@ -1209,8 +1216,8 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 		final JTextField tf = new JTextField();
 		tf.setText(Integer.toString(intVal.get()));
-		tf.setPreferredSize(new Dimension(TF_PREF_W, TF_HEIGHT));
-		tf.setMaximumSize(new Dimension(TF_MAX_W, TF_MAX_HEIGHT));
+		tf.setPreferredSize(new Dimension(DavisConfig.TF_PREF_W, DavisConfig.TF_HEIGHT));
+		tf.setMaximumSize(new Dimension(DavisConfig.TF_MAX_W, DavisConfig.TF_MAX_HEIGHT));
 		tf.addActionListener(new SPIConfigIntAction(intVal));
 		pan.add(tf);
 
@@ -1257,7 +1264,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 				tf.selectAll();
 				tf.setBackground(Color.red);
 
-				log.warning(ex.toString());
+				Biasgen.log.warning(ex.toString());
 			}
 		}
 	}
@@ -1267,5 +1274,15 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 			&& (((AEChip) getChip()).getAeViewer().getBiasgenFrame() != null)) {
 			((AEChip) getChip()).getAeViewer().getBiasgenFrame().setFileModified(true);
 		}
+	}
+
+	public static SPIConfigValue getConfigValueByName(final List<SPIConfigValue> configList, final String name) {
+		for (final SPIConfigValue v : configList) {
+			if (v.getName().equals(name)) {
+				return v;
+			}
+		}
+
+		return null;
 	}
 }
