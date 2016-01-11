@@ -816,11 +816,6 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 	 */
 	@Override
 	public synchronized void update(final Observable observable, final Object object) {
-		// while it is sending something
-		if (isBatchEditOccurring()) {
-			return;
-		}
-
 		if (getHardwareInterface() != null) {
 			final CypressFX3 fx3HwIntf = (CypressFX3) getHardwareInterface();
 
@@ -1136,7 +1131,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 	}
 
 	static final protected AddressedIPotCF addAIPot(final AddressedIPotArray potArray, final Biasgen biasgen, final String s) {
-		final AddressedIPotCF ret = null;
+		AddressedIPotCF ret = null;
 
 		try {
 			final String delim = ",";
@@ -1178,7 +1173,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 			final String tooltip = t.nextToken();
 
-			potArray.addPot(new AddressedIPotCF(biasgen, name, address, type, sex, false, true, AddressedIPotCF.maxCoarseBitValue / 2,
+			potArray.addPot(ret = new AddressedIPotCF(biasgen, name, address, type, sex, false, true, AddressedIPotCF.maxCoarseBitValue / 2,
 				AddressedIPotCF.maxFineBitValue, (address + 1), tooltip));
 		}
 		catch (final Exception e) {
