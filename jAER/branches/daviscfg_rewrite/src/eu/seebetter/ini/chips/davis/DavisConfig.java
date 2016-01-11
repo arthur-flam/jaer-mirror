@@ -163,7 +163,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		// DVS module
-		dvsRun = new SPIConfigBit("Run", "Enable DVS.", CypressFX3.FPGA_DVS, (short) 3, false, chip.getPrefs());
+		dvsRun = new SPIConfigBit("DvsRun", "Enable DVS.", CypressFX3.FPGA_DVS, (short) 3, false, chip.getPrefs());
 		dvsControl.add(dvsRun);
 		dvsControl.add(new SPIConfigInt("AckDelayRow", "Delay Row AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 4, 5, 4,
 			chip.getPrefs()));
@@ -193,7 +193,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		// APS module
-		apsRun = new SPIConfigBit("Run", "Enable APS.", CypressFX3.FPGA_APS, (short) 4, false, chip.getPrefs());
+		apsRun = new SPIConfigBit("ApsRun", "Enable APS.", CypressFX3.FPGA_APS, (short) 4, false, chip.getPrefs());
 		apsControl.add(apsRun);
 		apsControl.add(new SPIConfigBit("ResetRead", "Do the reset read in addition to the signal read.", CypressFX3.FPGA_APS, (short) 5,
 			true, chip.getPrefs()));
@@ -241,7 +241,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		});
 
 		// IMU module
-		imuControl.add(new SPIConfigBit("Run", "Enable IMU.", CypressFX3.FPGA_IMU, (short) 0, false, chip.getPrefs()));
+		imuControl.add(new SPIConfigBit("ImuRun", "Enable IMU.", CypressFX3.FPGA_IMU, (short) 0, false, chip.getPrefs()));
 		imuControl.add(
 			new SPIConfigBit("TempStandby", "Disable temperature measurement.", CypressFX3.FPGA_IMU, (short) 1, false, chip.getPrefs()));
 		// imuControl.add(new SPIConfigInt("AccelStandby", ".", CypressFX3.FPGA_IMU, (short) 2, 3, 0, chip.getPrefs()));
