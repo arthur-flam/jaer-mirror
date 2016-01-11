@@ -57,4 +57,9 @@ abstract public class DAVIS240BaseCamera extends DavisBaseCamera {
 		this();
 		setHardwareInterface(hardwareInterface);
 	}
+
+	@Override
+	public int translateJaer3AddressToJaerAddress(int address) {
+		return ((0x1de0000 - (address & 0x7fe0000)) >> 5) + ((address & 0x7fc) << 20) + ((address & 2) >> 1);
+	}
 }
