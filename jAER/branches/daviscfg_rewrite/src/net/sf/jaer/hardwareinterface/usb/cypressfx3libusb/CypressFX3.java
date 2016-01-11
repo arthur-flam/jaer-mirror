@@ -203,7 +203,7 @@ public class CypressFX3 implements AEMonitorInterface, ReaderBufferControl, USBI
 	/** The pool of raw AE packets, used for data transfer */
 	protected AEPacketRawPool aePacketRawPool = new AEPacketRawPool(this);
 	private String stringDescription = "CypressFX3"; // default which is
-       private USBPacketStatistics usbPacketStatistics=new USBPacketStatistics();
+	private USBPacketStatistics usbPacketStatistics = new USBPacketStatistics();
 
 	// modified by opening
 
@@ -553,7 +553,8 @@ public class CypressFX3 implements AEMonitorInterface, ReaderBufferControl, USBI
 		}
 
 		if (updateStringBuilder.length() > 0) {
-			updateStringBuilder.append("Please updated by following the Flashy upgrade documentation at 'http://inilabs.com/support/reflashing/'.");
+			updateStringBuilder
+				.append("Please updated by following the Flashy upgrade documentation at 'http://inilabs.com/support/reflashing/'.");
 
 			final String updateString = updateStringBuilder.toString();
 
@@ -772,8 +773,15 @@ public class CypressFX3 implements AEMonitorInterface, ReaderBufferControl, USBI
 		}
 	}
 
-	public synchronized void spiConfigSend(final short moduleAddr, final short paramAddr, final int param)
-		throws HardwareInterfaceException {
+	protected int adjustHWParam(final short moduleAddr, final short paramAddr, int param) {
+		// No change by default.
+		return (param);
+	}
+
+	public synchronized void spiConfigSend(final short moduleAddr, final short paramAddr, int param) throws HardwareInterfaceException {
+		// Some values have to be adjusted based on hardware features, so we do that here.
+		param = adjustHWParam(moduleAddr, paramAddr, param);
+
 		final byte[] configBytes = new byte[4];
 
 		configBytes[0] = (byte) ((param >>> 24) & 0x00FF);
@@ -1003,7 +1011,7 @@ public class CypressFX3 implements AEMonitorInterface, ReaderBufferControl, USBI
 			public void processTransfer(final RestrictedTransfer transfer) {
 				synchronized (aePacketRawPool) {
 					if (transfer.status() == LibUsb.TRANSFER_COMPLETED) {
-                                usbPacketStatistics.addSample(transfer);
+						usbPacketStatistics.addSample(transfer);
 						translateEvents(transfer.buffer());
 
 						if ((chip != null) && (chip.getFilterChain() != null)
@@ -1871,24 +1879,24 @@ public class CypressFX3 implements AEMonitorInterface, ReaderBufferControl, USBI
 		return false;
 	}
 
-    @Override
+	@Override
 	public void setShowUsbStatistics(boolean yes) {
-        usbPacketStatistics.setShowUsbStatistics(yes);
-    }
+		usbPacketStatistics.setShowUsbStatistics(yes);
+	}
 
-    @Override
+	@Override
 	public void setPrintUsbStatistics(boolean yes) {
-        usbPacketStatistics.setPrintUsbStatistics(yes);
-    }
+		usbPacketStatistics.setPrintUsbStatistics(yes);
+	}
 
-    @Override
+	@Override
 	public boolean isShowUsbStatistics() {
-        return usbPacketStatistics.isShowUsbStatistics();
-    }
+		return usbPacketStatistics.isShowUsbStatistics();
+	}
 
-    @Override
+	@Override
 	public boolean isPrintUsbStatistics() {
-        return usbPacketStatistics.isPrintUsbStatistics();
-    }
+		return usbPacketStatistics.isPrintUsbStatistics();
+	}
 
 }

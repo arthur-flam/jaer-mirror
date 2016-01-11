@@ -48,8 +48,29 @@ public class DAViSFX3HardwareInterface extends CypressFX3Biasgen {
 		setAeReader(new RetinaAEReader(this));
 		allocateAEBuffers();
 
+		// Update global information.
+		adcClockFreq = spiConfigReceive(CypressFX3.FPGA_SYSINFO, (short) 4);
+
 		getAeReader().startThread(); // arg is number of errors before giving up
 		HardwareInterfaceException.clearException();
+	}
+
+	public int adcClockFreq = 30;
+
+	@Override
+	protected int adjustHWParam(final short moduleAddr, final short paramAddr, int param) {
+		if ((moduleAddr == FPGA_APS) && (paramAddr == 13)) {
+			// Exposure multiplied by clock.
+			return (param * adcClockFreq);
+		}
+
+		if ((moduleAddr == FPGA_APS) && (paramAddr == 14)) {
+			// FrameDelay multiplied by clock.
+			return (param * adcClockFreq);
+		}
+
+		// No change by default.
+		return (param);
 	}
 
 	public static final int CHIP_DAVIS240A = 0;
