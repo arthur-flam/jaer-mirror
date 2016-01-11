@@ -171,6 +171,7 @@
                 <entry key="RefractoryFilter.filterEnabled" value="false"/>
                 <entry key="RotateFilter.filterEnabled" value="false"/>
                 <entry key="SPIConfigBit.AERnArow" value="true"/>
+                <entry key="SPIConfigBit.ApsRun" value="true"/>
                 <entry key="SPIConfigBit.DetectFallingEdges" value="false"/>
                 <entry key="SPIConfigBit.DetectPulsePolarity" value="true"/>
                 <entry key="SPIConfigBit.DetectPulses" value="true"/>
@@ -179,6 +180,7 @@
                 <entry key="SPIConfigBit.DropDVSOnTransferStall" value="true"/>
                 <entry key="SPIConfigBit.DropExtInputOnTransferStall" value="true"/>
                 <entry key="SPIConfigBit.DropIMUOnTransferStall" value="false"/>
+                <entry key="SPIConfigBit.DvsRun" value="true"/>
                 <entry key="SPIConfigBit.ExternalAERControl" value="false"/>
                 <entry key="SPIConfigBit.FilterBackgroundActivity" value="false"/>
                 <entry key="SPIConfigBit.FilterRowOnlyEvents" value="true"/>
@@ -186,12 +188,12 @@
                 <entry key="SPIConfigBit.GeneratePulsePolarity" value="false"/>
                 <entry key="SPIConfigBit.GenerateUseCustomSignal" value="false"/>
                 <entry key="SPIConfigBit.GlobalShutter" value="true"/>
+                <entry key="SPIConfigBit.ImuRun" value="true"/>
                 <entry key="SPIConfigBit.LPCycle" value="false"/>
                 <entry key="SPIConfigBit.RampShortReset" value="false"/>
                 <entry key="SPIConfigBit.ResetCalibNeuron" value="true"/>
                 <entry key="SPIConfigBit.ResetRead" value="true"/>
                 <entry key="SPIConfigBit.ResetTestPixel" value="true"/>
-                <entry key="SPIConfigBit.Run" value="false"/>
                 <entry key="SPIConfigBit.RunDetector" value="false"/>
                 <entry key="SPIConfigBit.RunGenerator" value="false"/>
                 <entry key="SPIConfigBit.SampleEnable" value="true"/>
