@@ -834,11 +834,21 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 					final SPIConfigBit cfgBit = (SPIConfigBit) observable;
 
 					fx3HwIntf.spiConfigSend(cfgBit.getModuleAddr(), cfgBit.getParamAddr(), (cfgBit.isSet()) ? (1) : (0));
+
+					// Ensure GUI is up-to-date.
+					if (configValueMap.containsKey(cfgBit)) {
+						((JRadioButton) configValueMap.get(cfgBit)).setSelected(cfgBit.isSet());
+					}
 				}
 				else if (observable instanceof SPIConfigInt) {
 					final SPIConfigInt cfgInt = (SPIConfigInt) observable;
 
 					fx3HwIntf.spiConfigSend(cfgInt.getModuleAddr(), cfgInt.getParamAddr(), cfgInt.get());
+
+					// Ensure GUI is up-to-date.
+					if (configValueMap.containsKey(cfgInt)) {
+						((JTextField) configValueMap.get(cfgInt)).setText(Integer.toString(cfgInt.get()));
+					}
 				}
 			}
 			catch (final HardwareInterfaceException e) {
