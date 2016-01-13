@@ -252,10 +252,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 			new SPIConfigInt("SampleRateDivider", "Sample-rate divider value.", CypressFX3.FPGA_IMU, (short) 6, 8, 0, chip.getPrefs()));
 		imuControl.add(new SPIConfigInt("DigitalLowPassFilter", "Digital low-pass filter configuration.", CypressFX3.FPGA_IMU, (short) 7, 3,
 			1, chip.getPrefs()));
-		imuControl.add(new SPIConfigInt("AccelFullScale", "Accellerometer scale configuration.", CypressFX3.FPGA_IMU, (short) 8, 2, 1,
+		imuControl.add(new SPIConfigInt("AccelFullScale", "Accellerometer scale configuration.", CypressFX3.FPGA_IMU, (short) 8, 2, 2,
 			chip.getPrefs()));
 		imuControl.add(
-			new SPIConfigInt("GyroFullScale", "Gyroscope scale configuration.", CypressFX3.FPGA_IMU, (short) 9, 2, 1, chip.getPrefs()));
+			new SPIConfigInt("GyroFullScale", "Gyroscope scale configuration.", CypressFX3.FPGA_IMU, (short) 9, 2, 2, chip.getPrefs()));
 
 		for (final SPIConfigValue cfgVal : imuControl) {
 			cfgVal.addObserver(this);
@@ -639,6 +639,14 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		if (ipots != null) {
 			ipots.loadPreferences();
 		}
+
+		if (imuControlGUI != null) {
+			imuControlGUI.loadPreference();
+		}
+
+		if (videoControl != null) {
+			videoControl.loadPreference();
+		}
 	}
 
 	@Override
@@ -826,6 +834,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		ipots.storePreferences();
+
+		imuControlGUI.storePreference();
+
+		videoControl.storePreference();
 
 		super.storePreferences();
 	}

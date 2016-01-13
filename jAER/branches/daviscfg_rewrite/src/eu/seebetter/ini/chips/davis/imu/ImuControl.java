@@ -165,8 +165,8 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 	public final void loadPreference() {
 		try {
 			setGyroScale(
-				ImuGyroScale.valueOf(davisChip.getPrefs().get("ImuGyroScale", ImuGyroScale.GyroFullScaleDegPerSec1000.toString())));
-			setAccelScale(ImuAccelScale.valueOf(davisChip.getPrefs().get("ImuAccelScale", ImuAccelScale.ImuAccelScaleG8.toString())));
+				ImuGyroScale.valueOf(davisChip.getPrefs().get("IMU.GyroScale", ImuGyroScale.GyroFullScaleDegPerSec1000.toString())));
+			setAccelScale(ImuAccelScale.valueOf(davisChip.getPrefs().get("IMU.AccelScale", ImuAccelScale.ImuAccelScaleG8.toString())));
 			setDisplayImu(davisConfig.getChip().getPrefs().getBoolean("IMU.displayEnabled", true));
 		}
 		catch (final Exception e) {
@@ -176,8 +176,8 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 
 	@Override
 	public void storePreference() {
-		davisChip.getPrefs().put("ImuGyroScale", imuGyroScale.toString());
-		davisChip.getPrefs().put("ImuAccelScale", imuAccelScale.toString());
+		davisChip.getPrefs().put("IMU.GyroScale", imuGyroScale.toString());
+		davisChip.getPrefs().put("IMU.AccelScale", imuAccelScale.toString());
 		davisChip.getPrefs().putBoolean("IMU.displayEnabled", displayImuEnabled);
 	}
 
@@ -192,10 +192,10 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 		try {
 			// log.info(e.toString());
 			switch (e.getKey()) {
-				case "ImuAccelScale":
+				case "IMU.AccelScale":
 					setAccelScale(ImuAccelScale.valueOf(e.getNewValue()));
 					break;
-				case "ImuGyroScale":
+				case "IMU.GyroScale":
 					setGyroScale(ImuGyroScale.valueOf(e.getNewValue()));
 					break;
 				case "IMU.displayEnabled":

@@ -162,6 +162,9 @@
                 <entry key="FilterChain.timeLimitEnabled" value="false"/>
                 <entry key="FilterChain.timeLimitMs" value="10"/>
                 <entry key="HotPixelFilter.filterEnabled" value="false"/>
+                <entry key="IMU.AccelScale" value="ImuAccelScaleG8"/>
+                <entry key="IMU.GyroScale" value="GyroFullScaleDegPerSec1000"/>
+                <entry key="IMU.displayEnabled" value="true"/>
                 <entry key="Info.filterEnabled" value="false"/>
                 <entry key="Info.useLocalTimeZone" value="true"/>
                 <entry key="JaerAviWriter.filterEnabled" value="false"/>
@@ -204,7 +207,7 @@
                 <entry key="SPIConfigBit.UseAOut" value="true"/>
                 <entry key="SPIConfigBit.UseInternalADC" value="true"/>
                 <entry key="SPIConfigBit.WaitOnTransferStall" value="true"/>
-                <entry key="SPIConfigInt.AccelFullScale" value="1"/>
+                <entry key="SPIConfigInt.AccelFullScale" value="2"/>
                 <entry key="SPIConfigInt.AckDelayColumn" value="0"/>
                 <entry key="SPIConfigInt.AckDelayRow" value="4"/>
                 <entry key="SPIConfigInt.AckExtensionColumn" value="0"/>
@@ -226,7 +229,7 @@
                 <entry key="SPIConfigInt.FrameDelay" value="1000"/>
                 <entry key="SPIConfigInt.GeneratePulseInterval" value="120"/>
                 <entry key="SPIConfigInt.GeneratePulseLength" value="60"/>
-                <entry key="SPIConfigInt.GyroFullScale" value="1"/>
+                <entry key="SPIConfigInt.GyroFullScale" value="2"/>
                 <entry key="SPIConfigInt.LPWakeup" value="1"/>
                 <entry key="SPIConfigInt.NullSettle" value="3"/>
                 <entry key="SPIConfigInt.RampReset" value="10"/>
@@ -234,6 +237,8 @@
                 <entry key="SPIConfigInt.RowSettle" value="10"/>
                 <entry key="SPIConfigInt.SampleRateDivider" value="0"/>
                 <entry key="SPIConfigInt.SampleSettle" value="30"/>
+                <entry key="VideoControl.displayEvents" value="true"/>
+                <entry key="VideoControl.displayFrames" value="true"/>
                 <entry key="XYTypeFilter.filterEnabled" value="false"/>
               </map>
             </node>
