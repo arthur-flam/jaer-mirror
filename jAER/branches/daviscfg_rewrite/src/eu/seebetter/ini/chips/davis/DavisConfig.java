@@ -336,6 +336,41 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		// imuControl
 		imuControlGUI = new ImuControl(this, imuControl);
 
+		// Link to DavisUserControlPanel to update values there too.
+		dvsRun.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_CAPTURE_EVENTS_ENABLED, null,
+					((SPIConfigBit) o).isSet());
+			}
+		});
+		apsRun.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_CAPTURE_FRAMES_ENABLED, null,
+					((SPIConfigBit) o).isSet());
+			}
+		});
+		globalShutter.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_GLOBAL_SHUTTER_MODE_ENABLED, null,
+					((SPIConfigBit) o).isSet());
+			}
+		});
+		apsExposure.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_EXPOSURE_DELAY_US, null, ((SPIConfigInt) o).get());
+			}
+		});
+		apsFrameDelay.addObserver(new Observer() {
+			@Override
+			public void update(Observable o, Object arg) {
+				getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_FRAME_DELAY_US, null, ((SPIConfigInt) o).get());
+			}
+		});
+
 		setBatchEditOccurring(true);
 		loadPreferences();
 		setBatchEditOccurring(false);
@@ -347,9 +382,6 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 			Biasgen.log.log(Level.SEVERE, null, ex);
 		}
 	}
-
-	public static final String PROPERTY_EXPOSURE_DELAY_US = "PROPERTY_EXPOSURE_DELAY_US";
-	public static final String PROPERTY_FRAME_DELAY_US = "PROPERTY_FRAME_DELAY_US";
 
 	private ParameterControlPanel videoParameterControlPanel;
 	private JPanel userFriendlyControls;

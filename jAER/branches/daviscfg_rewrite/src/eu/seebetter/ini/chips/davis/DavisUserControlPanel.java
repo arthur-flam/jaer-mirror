@@ -330,11 +330,11 @@ public class DavisUserControlPanel extends javax.swing.JPanel implements Propert
 					contrastSp.setValue((float) evt.getNewValue());
 				}
 					break;
-				case DavisConfig.PROPERTY_EXPOSURE_DELAY_US: {
+				case DavisDisplayConfigInterface.PROPERTY_EXPOSURE_DELAY_US: {
 					edSp.setValue((Integer) evt.getNewValue() * .001f);
 				}
 					break;
-				case DavisConfig.PROPERTY_FRAME_DELAY_US: {
+				case DavisDisplayConfigInterface.PROPERTY_FRAME_DELAY_US: {
 					fdSp.setValue((Integer) evt.getNewValue() * .001f);
 				}
 					break;

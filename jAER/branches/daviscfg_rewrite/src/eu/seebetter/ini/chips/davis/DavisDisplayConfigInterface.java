@@ -22,7 +22,9 @@ public interface DavisDisplayConfigInterface extends DvsDisplayConfigInterface {
 		PROPERTY_DISPLAY_EVENTS_ENABLED = "PROPERTY_DISPLAY_EVENTS_ENABLED";
 
 	public static final String PROPERTY_GLOBAL_SHUTTER_MODE_ENABLED = "PROPERTY_GLOBAL_SHUTTER_MODE_ENABLED";
-	public static final String PROPERTY_TRANSLATE_ROW_ONLY_EVENTS = "PROPERTY_TRANSLATE_ROW_ONLY_EVENTS";
+
+	public static final String PROPERTY_EXPOSURE_DELAY_US = "PROPERTY_EXPOSURE_DELAY_US";
+	public static final String PROPERTY_FRAME_DELAY_US = "PROPERTY_FRAME_DELAY_US";
 
 	// following should not be part of display, rather they are control of capture
 	// abstract public void setFrameDelayMs(float ms); // TODO these are not rendering controls, they are capture
