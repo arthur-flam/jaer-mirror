@@ -312,13 +312,13 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 			CypressFX3.FPGA_CHIPBIAS, (short) 136, true, this));
 		chipControl.add(new SPIConfigBit("Chip.TypeNCalibNeuron",
 			"Make the integrate and fire calibration neuron configured to measure N type biases; otherwise measures P-type currents.",
-			CypressFX3.FPGA_CHIPBIAS, (short) 137, true, this));
+			CypressFX3.FPGA_CHIPBIAS, (short) 137, false, this));
 		chipControl.add(
 			new SPIConfigBit("Chip.ResetTestPixel", "Keep the text pixel in reset.", CypressFX3.FPGA_CHIPBIAS, (short) 138, true, this));
 		chipControl.add(
-			new SPIConfigBit("Chip.AERnArow", "Use nArow in the AER state machine.", CypressFX3.FPGA_CHIPBIAS, (short) 140, true, this));
+			new SPIConfigBit("Chip.AERnArow", "Use nArow in the AER state machine.", CypressFX3.FPGA_CHIPBIAS, (short) 140, false, this));
 		chipControl.add(new SPIConfigBit("Chip.UseAOut", "Turn the pads for the analog MUX outputs on.", CypressFX3.FPGA_CHIPBIAS,
-			(short) 141, true, this));
+			(short) 141, false, this));
 
 		for (final SPIConfigValue cfgVal : chipControl) {
 			cfgVal.addObserver(this);
