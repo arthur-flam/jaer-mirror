@@ -50,11 +50,11 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 	}
 
 	public boolean isImuEnabled() {
-		return ((SPIConfigBit) DavisConfig.getConfigValueByName(imuControl, "ImuRun")).isSet();
+		return ((SPIConfigBit) DavisConfig.getConfigValueByName(imuControl, "IMU.Run")).isSet();
 	}
 
 	public void setImuEnabled(final boolean yes) {
-		((SPIConfigBit) DavisConfig.getConfigValueByName(imuControl, "ImuRun")).set(yes);
+		((SPIConfigBit) DavisConfig.getConfigValueByName(imuControl, "IMU.Run")).set(yes);
 
 		davisConfig.getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_IMU_ENABLED, null, yes);
 	}
@@ -67,13 +67,13 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 			throw new IllegalArgumentException("dlpf=" + dlpf + " is outside allowed range 0-6");
 		}
 
-		((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "DigitalLowPassFilter")).set(dlpf);
+		((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "IMU.DigitalLowPassFilter")).set(dlpf);
 
 		davisConfig.getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_IMU_DLPF_CHANGED, null, dlpf);
 	}
 
 	public int getDLPF() {
-		return ((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "DigitalLowPassFilter")).get();
+		return ((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "IMU.DigitalLowPassFilter")).get();
 	}
 
 	/**
@@ -84,13 +84,13 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 			throw new IllegalArgumentException("sampleRateDivider=" + srd + " is outside allowed range 0-255");
 		}
 
-		((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "SampleRateDivider")).set(srd);
+		((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "IMU.SampleRateDivider")).set(srd);
 
 		davisConfig.getSupport().firePropertyChange(DavisDisplayConfigInterface.PROPERTY_IMU_SAMPLE_RATE_CHANGED, null, srd);
 	}
 
 	public int getSampleRateDivider() {
-		return ((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "SampleRateDivider")).get();
+		return ((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "IMU.SampleRateDivider")).get();
 	}
 
 	public ImuGyroScale getGyroScale() {
@@ -133,7 +133,7 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 			throw new IllegalArgumentException("value " + val + " is outside range 0-3");
 		}
 
-		((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "AccelFullScale")).set(val);
+		((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "IMU.AccelFullScale")).set(val);
 	}
 
 	// gyro scale bits
@@ -143,7 +143,7 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 			throw new IllegalArgumentException("value " + val + " is outside range 0-3");
 		}
 
-		((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "GyroFullScale")).set(val);
+		((SPIConfigInt) DavisConfig.getConfigValueByName(imuControl, "IMU.GyroFullScale")).set(val);
 	}
 
 	public boolean isDisplayImu() {
@@ -161,13 +161,18 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 		return tooltipSupport.getPropertyTooltip(propertyName);
 	}
 
+	private String getPreferencesKey() {
+		return davisChip.getClass().getSimpleName() + ".";
+	}
+
 	@Override
 	public final void loadPreference() {
 		try {
-			setGyroScale(
-				ImuGyroScale.valueOf(davisChip.getPrefs().get("IMU.GyroScale", ImuGyroScale.GyroFullScaleDegPerSec1000.toString())));
-			setAccelScale(ImuAccelScale.valueOf(davisChip.getPrefs().get("IMU.AccelScale", ImuAccelScale.ImuAccelScaleG8.toString())));
-			setDisplayImu(davisConfig.getChip().getPrefs().getBoolean("IMU.displayEnabled", true));
+			setGyroScale(ImuGyroScale.valueOf(
+				davisChip.getPrefs().get(getPreferencesKey() + "IMU.GyroScale", ImuGyroScale.GyroFullScaleDegPerSec1000.toString())));
+			setAccelScale(ImuAccelScale
+				.valueOf(davisChip.getPrefs().get(getPreferencesKey() + "IMU.AccelScale", ImuAccelScale.ImuAccelScaleG8.toString())));
+			setDisplayImu(davisConfig.getChip().getPrefs().getBoolean(getPreferencesKey() + "IMU.displayEnabled", true));
 		}
 		catch (final Exception e) {
 			davisConfig.getChip().getLog().warning(e.toString());
@@ -176,9 +181,9 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 
 	@Override
 	public void storePreference() {
-		davisChip.getPrefs().put("IMU.GyroScale", imuGyroScale.toString());
-		davisChip.getPrefs().put("IMU.AccelScale", imuAccelScale.toString());
-		davisChip.getPrefs().putBoolean("IMU.displayEnabled", displayImuEnabled);
+		davisChip.getPrefs().put(getPreferencesKey() + "IMU.GyroScale", imuGyroScale.toString());
+		davisChip.getPrefs().put(getPreferencesKey() + "IMU.AccelScale", imuAccelScale.toString());
+		davisChip.getPrefs().putBoolean(getPreferencesKey() + "IMU.displayEnabled", displayImuEnabled);
 	}
 
 	@Override
@@ -190,16 +195,14 @@ public class ImuControl extends Observable implements HasPropertyTooltips, Biasg
 			return;
 		}
 		try {
-			// log.info(e.toString());
-			switch (e.getKey()) {
-				case "IMU.AccelScale":
-					setAccelScale(ImuAccelScale.valueOf(e.getNewValue()));
-					break;
-				case "IMU.GyroScale":
-					setGyroScale(ImuGyroScale.valueOf(e.getNewValue()));
-					break;
-				case "IMU.displayEnabled":
-					setDisplayImu(Boolean.valueOf(e.getNewValue()));
+			if (e.getKey().contains("IMU.AccelScale")) {
+				setAccelScale(ImuAccelScale.valueOf(e.getNewValue()));
+			}
+			else if (e.getKey().contains("IMU.GyroScale")) {
+				setGyroScale(ImuGyroScale.valueOf(e.getNewValue()));
+			}
+			else if (e.getKey().contains("IMU.displayEnabled")) {
+				setDisplayImu(Boolean.valueOf(e.getNewValue()));
 			}
 		}
 		catch (final IllegalArgumentException iae) {

@@ -264,9 +264,9 @@ public class CochleaLP extends CochleaChip implements Observer {
 			// New logic SPI configuration values.
 			// Scanner module
 			scannerControl
-				.add(new SPIConfigBit("ScannerEnable", "Enable scanner output.", CypressFX3.FPGA_SCANNER, (short) 0, false, getPrefs()));
-			scannerControl.add(
-				new SPIConfigInt("ScannerChannel", "Which channel to scan out.", CypressFX3.FPGA_SCANNER, (short) 1, 7, 0, getPrefs()));
+				.add(new SPIConfigBit("ScannerEnable", "Enable scanner output.", CypressFX3.FPGA_SCANNER, (short) 0, false, this));
+			scannerControl
+				.add(new SPIConfigInt("ScannerChannel", "Which channel to scan out.", CypressFX3.FPGA_SCANNER, (short) 1, 7, 0, this));
 
 			for (final SPIConfigValue cfgVal : scannerControl) {
 				cfgVal.addObserver(this);
@@ -274,31 +274,30 @@ public class CochleaLP extends CochleaChip implements Observer {
 			}
 
 			// DAC control
-			dacRun = new SPIConfigBit("DACRun", "Enable external DAC.", CypressFX3.FPGA_DAC, (short) 0, false, getPrefs());
+			dacRun = new SPIConfigBit("DACRun", "Enable external DAC.", CypressFX3.FPGA_DAC, (short) 0, false, this);
 			dacRun.addObserver(this);
 			allPreferencesList.add(dacRun);
 
 			// Multiplexer module
 			biasForceEnable = new SPIConfigBit("ForceBiasEnable", "Force the biases to be always ON.", CypressFX3.FPGA_MUX, (short) 3,
-				false, getPrefs());
+				false, this);
 			biasForceEnable.addObserver(this);
 			allPreferencesList.add(biasForceEnable);
 
 			// Generic AER from chip
 			aerControl.add(new SPIConfigBit("TestAEREnable", "Enable Test AER output instead of normal AER.", CypressFX3.FPGA_SCANNER,
-				(short) 2, false, getPrefs())); // In scanner module for convenience.
+				(short) 2, false, this)); // In scanner module for convenience.
+			aerControl.add(new SPIConfigBit("AERRun", "Run the main AER state machine.", CypressFX3.FPGA_DVS, (short) 3, false, this));
 			aerControl
-				.add(new SPIConfigBit("AERRun", "Run the main AER state machine.", CypressFX3.FPGA_DVS, (short) 3, false, getPrefs()));
+				.add(new SPIConfigInt("AERAckDelay", "Delay AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 4, 12, 0, this));
 			aerControl.add(
-				new SPIConfigInt("AERAckDelay", "Delay AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 4, 12, 0, getPrefs()));
-			aerControl.add(new SPIConfigInt("AERAckExtension", "Extend AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 6, 12, 0,
-				getPrefs()));
+				new SPIConfigInt("AERAckExtension", "Extend AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 6, 12, 0, this));
 			aerControl.add(new SPIConfigBit("AERWaitOnTransferStall",
 				"Whether the AER state machine should wait,<br> or continue servicing the AER bus when the FIFOs are full.",
-				CypressFX3.FPGA_DVS, (short) 8, false, getPrefs()));
+				CypressFX3.FPGA_DVS, (short) 8, false, this));
 			aerControl.add(new SPIConfigBit("AERExternalAERControl",
 				"Do not control/ACK the AER bus anymore, <br>but let it be done by an external device.", CypressFX3.FPGA_DVS, (short) 10,
-				false, getPrefs()));
+				false, this));
 
 			for (final SPIConfigValue cfgVal : aerControl) {
 				cfgVal.addObserver(this);
@@ -307,17 +306,17 @@ public class CochleaLP extends CochleaChip implements Observer {
 
 			// Chip diagnostic chain
 			chipDiagChain.add(new SPIConfigInt("ChipResetCapConfigADM", "Reset cap configuration in ADM.", CypressFX3.FPGA_CHIPBIAS,
-				(short) 128, 2, 0, getPrefs()));
+				(short) 128, 2, 0, this));
 			chipDiagChain.add(new SPIConfigInt("ChipDelayCapConfigADM", "Delay cap configuration in ADM.", CypressFX3.FPGA_CHIPBIAS,
-				(short) 129, 3, 0, getPrefs()));
+				(short) 129, 3, 0, this));
 			chipDiagChain.add(new SPIConfigBit("ChipComparatorSelfOsc", "Comparator self-oscillation enable.", CypressFX3.FPGA_CHIPBIAS,
-				(short) 130, false, getPrefs()));
-			chipDiagChain.add(
-				new SPIConfigInt("ChipLNAGainConfig", "LNA gain configuration.", CypressFX3.FPGA_CHIPBIAS, (short) 131, 3, 0, getPrefs()));
+				(short) 130, false, this));
+			chipDiagChain
+				.add(new SPIConfigInt("ChipLNAGainConfig", "LNA gain configuration.", CypressFX3.FPGA_CHIPBIAS, (short) 131, 3, 0, this));
 			chipDiagChain.add(new SPIConfigBit("ChipLNADoubleInputSelect", "LNA double or single input selection.",
-				CypressFX3.FPGA_CHIPBIAS, (short) 132, false, getPrefs()));
-			chipDiagChain.add(new SPIConfigBit("ChipTestScannerBias", "Test scanner bias enable.", CypressFX3.FPGA_CHIPBIAS, (short) 133,
-				false, getPrefs()));
+				CypressFX3.FPGA_CHIPBIAS, (short) 132, false, this));
+			chipDiagChain.add(
+				new SPIConfigBit("ChipTestScannerBias", "Test scanner bias enable.", CypressFX3.FPGA_CHIPBIAS, (short) 133, false, this));
 
 			for (final SPIConfigValue cfgVal : chipDiagChain) {
 				cfgVal.addObserver(this);

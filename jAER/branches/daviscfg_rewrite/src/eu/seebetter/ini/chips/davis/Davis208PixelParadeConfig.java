@@ -68,16 +68,16 @@ public class Davis208PixelParadeConfig extends DavisTowerBaseConfig {
 		// Additional chip control bits.
 		final List<SPIConfigValue> chipControlLocal = new ArrayList<>();
 
-		chipControlLocal.add(new SPIConfigBit("SelPreAmpAvgxD", "If 1, connect PreAmpAvgxA to calibration neuron, if 0, commongate.",
-			CypressFX3.FPGA_CHIPBIAS, (short) 145, false, chip.getPrefs()));
-		chipControlLocal.add(new SPIConfigBit("SelBiasRefxD", "If 1, select Nbias Blk1N, if 0, VDAC VblkV2.", CypressFX3.FPGA_CHIPBIAS,
-			(short) 146, true, chip.getPrefs()));
-		chipControlLocal.add(new SPIConfigBit("SelSensexD", "If 0, hook refractory bias to Vdd (unselect).", CypressFX3.FPGA_CHIPBIAS,
-			(short) 147, true, chip.getPrefs()));
-		chipControlLocal.add(new SPIConfigBit("SelPosFbxD", "If 0, hook refractory bias to Vdd (unselect).", CypressFX3.FPGA_CHIPBIAS,
-			(short) 148, true, chip.getPrefs()));
-		chipControlLocal.add(new SPIConfigBit("SelHpxD", "If 0, hook refractory bias to Vdd (unselect).", CypressFX3.FPGA_CHIPBIAS,
-			(short) 149, true, chip.getPrefs()));
+		chipControlLocal.add(new SPIConfigBit("Chip.SelPreAmpAvgxD", "If 1, connect PreAmpAvgxA to calibration neuron, if 0, commongate.",
+			CypressFX3.FPGA_CHIPBIAS, (short) 145, false, this));
+		chipControlLocal.add(new SPIConfigBit("Chip.SelBiasRefxD", "If 1, select Nbias Blk1N, if 0, VDAC VblkV2.", CypressFX3.FPGA_CHIPBIAS,
+			(short) 146, true, this));
+		chipControlLocal.add(new SPIConfigBit("Chip.SelSensexD", "If 0, hook refractory bias to Vdd (unselect).", CypressFX3.FPGA_CHIPBIAS,
+			(short) 147, true, this));
+		chipControlLocal.add(new SPIConfigBit("Chip.SelPosFbxD", "If 0, hook refractory bias to Vdd (unselect).", CypressFX3.FPGA_CHIPBIAS,
+			(short) 148, true, this));
+		chipControlLocal.add(new SPIConfigBit("Chip.SelHpxD", "If 0, hook refractory bias to Vdd (unselect).", CypressFX3.FPGA_CHIPBIAS,
+			(short) 149, true, this));
 
 		for (final SPIConfigValue cfgVal : chipControlLocal) {
 			cfgVal.addObserver(this);

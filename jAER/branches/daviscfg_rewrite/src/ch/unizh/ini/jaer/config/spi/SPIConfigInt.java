@@ -4,20 +4,25 @@ import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.Preferences;
 
 import ch.unizh.ini.jaer.config.ConfigInt;
+import net.sf.jaer.biasgen.Biasgen;
 
 public class SPIConfigInt extends SPIConfigValue implements ConfigInt {
 
 	private final int defaultValue;
 	private int value;
-	private Preferences sprefs;
+
+	private final Biasgen biasgen;
+	private final Preferences sprefs;
 
 	public SPIConfigInt(final String configName, final String toolTip, final short moduleAddr, final short paramAddr, final int numBits,
-		final int defaultValue, Preferences sprefs) {
+		final int defaultValue, final Biasgen biasgen) {
 		super(configName, toolTip, moduleAddr, paramAddr, numBits);
 
 		this.defaultValue = defaultValue;
 
-		this.sprefs = sprefs;
+		this.biasgen = biasgen;
+		this.sprefs = biasgen.getChip().getPrefs();
+
 		loadPreference();
 		sprefs.addPreferenceChangeListener(this);
 	}
@@ -55,6 +60,11 @@ public class SPIConfigInt extends SPIConfigValue implements ConfigInt {
 			final int newVal = Integer.parseInt(e.getNewValue());
 			set(newVal);
 		}
+	}
+
+	@Override
+	public String getPreferencesKey() {
+		return biasgen.getChip().getClass().getSimpleName() + "." + getName();
 	}
 
 	@Override

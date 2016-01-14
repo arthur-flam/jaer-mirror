@@ -26,9 +26,9 @@ public class Davis240Config extends DavisConfig {
 		super(chip);
 		setName("Davis240Config");
 
-		final SPIConfigBit specialPixelControl = new SPIConfigBit("SpecialPixelControl",
+		final SPIConfigBit specialPixelControl = new SPIConfigBit("Chip.SpecialPixelControl",
 			"<html>DAVIS240A: enable experimental hot pixel suppression circuit. <p>DAVIS240B: enable experimental pixel stripes on right side of array. <p>DAVIS240C: no effect.",
-			CypressFX3.FPGA_CHIPBIAS, (short) 139, false, chip.getPrefs());
+			CypressFX3.FPGA_CHIPBIAS, (short) 139, false, this);
 		chipControl.add(specialPixelControl);
 		specialPixelControl.addObserver(this);
 		allPreferencesList.add(specialPixelControl);

@@ -144,18 +144,19 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		ssBiases[1] = ssn;
 
 		// Multiplexer module
-		muxControl.add(new SPIConfigBit("ForceChipBiasEnable", "Force the chip's bias generator to be always ON.", CypressFX3.FPGA_MUX,
-			(short) 3, false, chip.getPrefs()));
-		muxControl.add(new SPIConfigBit("DropDVSOnTransferStall", "Drop DVS events when USB FIFO is full.", CypressFX3.FPGA_MUX, (short) 4,
-			true, chip.getPrefs()));
-		muxControl.add(new SPIConfigBit("DropAPSOnTransferStall", "Drop APS events when USB FIFO is full.", CypressFX3.FPGA_MUX, (short) 5,
-			false, chip.getPrefs()));
-		muxControl.add(new SPIConfigBit("DropIMUOnTransferStall", "Drop IMU events when USB FIFO is full.", CypressFX3.FPGA_MUX, (short) 6,
-			false, chip.getPrefs()));
-		muxControl.add(new SPIConfigBit("DropExtInputOnTransferStall", "Drop External Input events when USB FIFO is full.",
-			CypressFX3.FPGA_MUX, (short) 7, true, chip.getPrefs()));
-		muxControl.add(new SPIConfigInt("EarlyPacketDelay", "Ensure a USB packet is committed at least every N x 125µs timesteps.",
-			CypressFX3.FPGA_USB, (short) 1, 13, 8, chip.getPrefs()));
+		muxControl.add(new SPIConfigBit("Mux.ForceChipBiasEnable", "Force the chip's bias generator to be always ON.", CypressFX3.FPGA_MUX,
+			(short) 3, false, this));
+		muxControl.add(new SPIConfigBit("Mux.DropDVSOnTransferStall", "Drop DVS events when USB FIFO is full.", CypressFX3.FPGA_MUX,
+			(short) 4, true, this));
+		muxControl.add(new SPIConfigBit("Mux.DropAPSOnTransferStall", "Drop APS events when USB FIFO is full.", CypressFX3.FPGA_MUX,
+			(short) 5, false, this));
+		muxControl.add(new SPIConfigBit("Mux.DropIMUOnTransferStall", "Drop IMU events when USB FIFO is full.", CypressFX3.FPGA_MUX,
+			(short) 6, false, this));
+		muxControl.add(new SPIConfigBit("Mux.DropExtInputOnTransferStall", "Drop External Input events when USB FIFO is full.",
+			CypressFX3.FPGA_MUX, (short) 7, true, this));
+
+		muxControl.add(new SPIConfigInt("USB.EarlyPacketDelay", "Ensure a USB packet is committed at least every N x 125µs timesteps.",
+			CypressFX3.FPGA_USB, (short) 1, 13, 8, this));
 
 		for (final SPIConfigValue cfgVal : muxControl) {
 			cfgVal.addObserver(this);
@@ -163,29 +164,29 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		// DVS module
-		dvsRun = new SPIConfigBit("DvsRun", "Enable DVS.", CypressFX3.FPGA_DVS, (short) 3, false, chip.getPrefs());
+		dvsRun = new SPIConfigBit("DVS.Run", "Enable DVS.", CypressFX3.FPGA_DVS, (short) 3, false, this);
 		dvsControl.add(dvsRun);
-		dvsControl.add(new SPIConfigInt("AckDelayRow", "Delay Row AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 4, 5, 4,
-			chip.getPrefs()));
-		dvsControl.add(new SPIConfigInt("AckDelayColumn", "Delay Column AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 5, 5, 0,
-			chip.getPrefs()));
-		dvsControl.add(new SPIConfigInt("AckExtensionRow", "Extend Row AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 6, 5, 1,
-			chip.getPrefs()));
-		dvsControl.add(new SPIConfigInt("AckExtensionColumn", "Extend Column AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 7,
-			5, 0, chip.getPrefs()));
-		dvsControl.add(new SPIConfigBit("WaitOnTransferStall",
+		dvsControl
+			.add(new SPIConfigInt("DVS.AckDelayRow", "Delay Row AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 4, 5, 4, this));
+		dvsControl.add(new SPIConfigInt("DVS.AckDelayColumn", "Delay Column AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 5,
+			5, 0, this));
+		dvsControl.add(
+			new SPIConfigInt("DVS.AckExtensionRow", "Extend Row AER ACK by this many cycles.", CypressFX3.FPGA_DVS, (short) 6, 5, 1, this));
+		dvsControl.add(new SPIConfigInt("DVS.AckExtensionColumn", "Extend Column AER ACK by this many cycles.", CypressFX3.FPGA_DVS,
+			(short) 7, 5, 0, this));
+		dvsControl.add(new SPIConfigBit("DVS.WaitOnTransferStall",
 			"On event FIFO full, wait to ACK until again empty if true, or just continue ACKing if false.", CypressFX3.FPGA_DVS, (short) 8,
-			false, chip.getPrefs()));
-		dvsControl.add(new SPIConfigBit("FilterRowOnlyEvents", "Filter out row-only events (y,y,y,...).", CypressFX3.FPGA_DVS, (short) 9,
-			true, chip.getPrefs()));
-		dvsControl.add(new SPIConfigBit("ExternalAERControl", "Don't drive AER ACK pin from FPGA (also must disable Event Capture).",
-			CypressFX3.FPGA_DVS, (short) 10, false, chip.getPrefs()));
+			false, this));
+		dvsControl.add(new SPIConfigBit("DVS.FilterRowOnlyEvents", "Filter out row-only events (y,y,y,...).", CypressFX3.FPGA_DVS,
+			(short) 9, true, this));
+		dvsControl.add(new SPIConfigBit("DVS.ExternalAERControl", "Don't drive AER ACK pin from FPGA (also must disable Event Capture).",
+			CypressFX3.FPGA_DVS, (short) 10, false, this));
 
 		// TODO: new boards only.
-		dvsControl.add(new SPIConfigBit("FilterBackgroundActivity", "Filter background events using hardware filter.", CypressFX3.FPGA_DVS,
-			(short) 29, false, chip.getPrefs()));
-		dvsControl.add(new SPIConfigInt("FilterBackgroundActivityDeltaTime", "Hardware background events filter delta time (in µs).",
-			CypressFX3.FPGA_DVS, (short) 30, 16, 20000, chip.getPrefs()));
+		dvsControl.add(new SPIConfigBit("DVS.FilterBackgroundActivity", "Filter background events using hardware filter.",
+			CypressFX3.FPGA_DVS, (short) 29, false, this));
+		dvsControl.add(new SPIConfigInt("DVS.FilterBackgroundActivityDeltaTime", "Hardware background events filter delta time (in µs).",
+			CypressFX3.FPGA_DVS, (short) 30, 16, 20000, this));
 
 		for (final SPIConfigValue cfgVal : dvsControl) {
 			cfgVal.addObserver(this);
@@ -193,30 +194,28 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		// APS module
-		apsRun = new SPIConfigBit("ApsRun", "Enable APS.", CypressFX3.FPGA_APS, (short) 4, false, chip.getPrefs());
+		apsRun = new SPIConfigBit("APS.Run", "Enable APS.", CypressFX3.FPGA_APS, (short) 4, false, this);
 		apsControl.add(apsRun);
-		apsControl.add(new SPIConfigBit("ResetRead", "Do the reset read in addition to the signal read.", CypressFX3.FPGA_APS, (short) 5,
-			true, chip.getPrefs()));
-		apsControl.add(new SPIConfigBit("WaitOnTransferStall",
+		apsControl.add(new SPIConfigBit("APS.ResetRead", "Do the reset read in addition to the signal read.", CypressFX3.FPGA_APS,
+			(short) 5, true, this));
+		apsControl.add(new SPIConfigBit("APS.WaitOnTransferStall",
 			"On event FIFO full, pause and wait for free space. This ensures no APS pixels are dropped.", CypressFX3.FPGA_APS, (short) 6,
-			true, chip.getPrefs()));
-		globalShutter = new SPIConfigBit("GlobalShutter", "Enable global shutter versus rolling shutter.", CypressFX3.FPGA_APS, (short) 8,
-			true, chip.getPrefs());
+			true, this));
+		globalShutter = new SPIConfigBit("APS.GlobalShutter", "Enable global shutter versus rolling shutter.", CypressFX3.FPGA_APS,
+			(short) 8, true, this);
 		apsControl.add(globalShutter);
-		apsExposure = new SPIConfigInt("Exposure", "Set exposure time (in µs).", CypressFX3.FPGA_APS, (short) 13, 20, 4000,
-			chip.getPrefs());
+		apsExposure = new SPIConfigInt("APS.Exposure", "Set exposure time (in µs).", CypressFX3.FPGA_APS, (short) 13, 20, 4000, this);
 		apsControl.add(apsExposure);
-		apsFrameDelay = new SPIConfigInt("FrameDelay", "Set delay time between frames (in µs).", CypressFX3.FPGA_APS, (short) 14, 20, 1000,
-			chip.getPrefs());
+		apsFrameDelay = new SPIConfigInt("APS.FrameDelay", "Set delay time between frames (in µs).", CypressFX3.FPGA_APS, (short) 14, 20,
+			1000, this);
 		apsControl.add(apsFrameDelay);
-		apsControl.add(
-			new SPIConfigInt("ResetSettle", "Set reset settle time (in cycles).", CypressFX3.FPGA_APS, (short) 15, 7, 10, chip.getPrefs()));
-		apsControl.add(new SPIConfigInt("ColumnSettle", "Set column settle time (in cycles).", CypressFX3.FPGA_APS, (short) 16, 7, 30,
-			chip.getPrefs()));
-		apsControl.add(
-			new SPIConfigInt("RowSettle", "Set row settle time (in cycles).", CypressFX3.FPGA_APS, (short) 17, 6, 10, chip.getPrefs()));
-		apsControl.add(
-			new SPIConfigInt("NullSettle", "Set null settle time (in cycles).", CypressFX3.FPGA_APS, (short) 18, 5, 3, chip.getPrefs()));
+		apsControl
+			.add(new SPIConfigInt("APS.ResetSettle", "Set reset settle time (in cycles).", CypressFX3.FPGA_APS, (short) 15, 7, 10, this));
+		apsControl
+			.add(new SPIConfigInt("APS.ColumnSettle", "Set column settle time (in cycles).", CypressFX3.FPGA_APS, (short) 16, 7, 30, this));
+		apsControl.add(new SPIConfigInt("APS.RowSettle", "Set row settle time (in cycles).", CypressFX3.FPGA_APS, (short) 17, 6, 10, this));
+		apsControl
+			.add(new SPIConfigInt("APS.NullSettle", "Set null settle time (in cycles).", CypressFX3.FPGA_APS, (short) 18, 5, 3, this));
 
 		for (final SPIConfigValue cfgVal : apsControl) {
 			cfgVal.addObserver(this);
@@ -241,21 +240,19 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		});
 
 		// IMU module
-		imuControl.add(new SPIConfigBit("ImuRun", "Enable IMU.", CypressFX3.FPGA_IMU, (short) 0, false, chip.getPrefs()));
-		imuControl.add(
-			new SPIConfigBit("TempStandby", "Disable temperature measurement.", CypressFX3.FPGA_IMU, (short) 1, false, chip.getPrefs()));
-		// imuControl.add(new SPIConfigInt("AccelStandby", ".", CypressFX3.FPGA_IMU, (short) 2, 3, 0, chip.getPrefs()));
-		// imuControl.add(new SPIConfigInt("GyroStandby", ".", CypressFX3.FPGA_IMU, (short) 3, 3, 0, chip.getPrefs()));
-		imuControl.add(new SPIConfigBit("LPCycle", "Low-power cycle.", CypressFX3.FPGA_IMU, (short) 4, false, chip.getPrefs()));
-		imuControl.add(new SPIConfigInt("LPWakeup", "Low-power wakeup mode.", CypressFX3.FPGA_IMU, (short) 5, 2, 1, chip.getPrefs()));
-		imuControl.add(
-			new SPIConfigInt("SampleRateDivider", "Sample-rate divider value.", CypressFX3.FPGA_IMU, (short) 6, 8, 0, chip.getPrefs()));
-		imuControl.add(new SPIConfigInt("DigitalLowPassFilter", "Digital low-pass filter configuration.", CypressFX3.FPGA_IMU, (short) 7, 3,
-			1, chip.getPrefs()));
-		imuControl.add(new SPIConfigInt("AccelFullScale", "Accellerometer scale configuration.", CypressFX3.FPGA_IMU, (short) 8, 2, 2,
-			chip.getPrefs()));
-		imuControl.add(
-			new SPIConfigInt("GyroFullScale", "Gyroscope scale configuration.", CypressFX3.FPGA_IMU, (short) 9, 2, 2, chip.getPrefs()));
+		imuControl.add(new SPIConfigBit("IMU.Run", "Enable IMU.", CypressFX3.FPGA_IMU, (short) 0, false, this));
+		imuControl
+			.add(new SPIConfigBit("IMU.TempStandby", "Disable temperature measurement.", CypressFX3.FPGA_IMU, (short) 1, false, this));
+		// imuControl.add(new SPIConfigInt("IMU.AccelStandby", ".", CypressFX3.FPGA_IMU, (short) 2, 3, 0, this));
+		// imuControl.add(new SPIConfigInt("IMU.GyroStandby", ".", CypressFX3.FPGA_IMU, (short) 3, 3, 0, this));
+		imuControl.add(new SPIConfigBit("IMU.LPCycle", "Low-power cycle.", CypressFX3.FPGA_IMU, (short) 4, false, this));
+		imuControl.add(new SPIConfigInt("IMU.LPWakeup", "Low-power wakeup mode.", CypressFX3.FPGA_IMU, (short) 5, 2, 1, this));
+		imuControl.add(new SPIConfigInt("IMU.SampleRateDivider", "Sample-rate divider value.", CypressFX3.FPGA_IMU, (short) 6, 8, 0, this));
+		imuControl.add(new SPIConfigInt("IMU.DigitalLowPassFilter", "Digital low-pass filter configuration.", CypressFX3.FPGA_IMU,
+			(short) 7, 3, 1, this));
+		imuControl
+			.add(new SPIConfigInt("IMU.AccelFullScale", "Accellerometer scale configuration.", CypressFX3.FPGA_IMU, (short) 8, 2, 2, this));
+		imuControl.add(new SPIConfigInt("IMU.GyroFullScale", "Gyroscope scale configuration.", CypressFX3.FPGA_IMU, (short) 9, 2, 2, this));
 
 		for (final SPIConfigValue cfgVal : imuControl) {
 			cfgVal.addObserver(this);
@@ -264,30 +261,29 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 		// External Input module
 		extInControl
-			.add(new SPIConfigBit("RunDetector", "Enable signal detector.", CypressFX3.FPGA_EXTINPUT, (short) 0, false, chip.getPrefs()));
-		extInControl.add(new SPIConfigBit("DetectRisingEdges", "Emit special event if a rising edge is detected.", CypressFX3.FPGA_EXTINPUT,
-			(short) 1, false, chip.getPrefs()));
-		extInControl.add(new SPIConfigBit("DetectFallingEdges", "Emit special event if a falling edge is detected.",
-			CypressFX3.FPGA_EXTINPUT, (short) 2, false, chip.getPrefs()));
-		extInControl.add(new SPIConfigBit("DetectPulses", "Emit special event if a pulse is detected.", CypressFX3.FPGA_EXTINPUT, (short) 3,
-			true, chip.getPrefs()));
-		extInControl.add(new SPIConfigBit("DetectPulsePolarity", "Polarity of the pulse to be detected.", CypressFX3.FPGA_EXTINPUT,
-			(short) 4, true, chip.getPrefs()));
-		extInControl.add(new SPIConfigInt("DetectPulseLength", "Minimal length of the pulse to be detected.", CypressFX3.FPGA_EXTINPUT,
-			(short) 5, 27, 120, chip.getPrefs()));
+			.add(new SPIConfigBit("ExtInput.RunDetector", "Enable signal detector.", CypressFX3.FPGA_EXTINPUT, (short) 0, false, this));
+		extInControl.add(new SPIConfigBit("ExtInput.DetectRisingEdges", "Emit special event if a rising edge is detected.",
+			CypressFX3.FPGA_EXTINPUT, (short) 1, false, this));
+		extInControl.add(new SPIConfigBit("ExtInput.DetectFallingEdges", "Emit special event if a falling edge is detected.",
+			CypressFX3.FPGA_EXTINPUT, (short) 2, false, this));
+		extInControl.add(new SPIConfigBit("ExtInput.DetectPulses", "Emit special event if a pulse is detected.", CypressFX3.FPGA_EXTINPUT,
+			(short) 3, true, this));
+		extInControl.add(new SPIConfigBit("ExtInput.DetectPulsePolarity", "Polarity of the pulse to be detected.", CypressFX3.FPGA_EXTINPUT,
+			(short) 4, true, this));
+		extInControl.add(new SPIConfigInt("ExtInput.DetectPulseLength", "Minimal length of the pulse to be detected.",
+			CypressFX3.FPGA_EXTINPUT, (short) 5, 27, 120, this));
 
 		// TODO: new boards only.
-		extInControl.add(new SPIConfigBit("RunGenerator", "Enable signal generator (PWM-like).", CypressFX3.FPGA_EXTINPUT, (short) 7, false,
-			chip.getPrefs()));
-		extInControl
-			.add(new SPIConfigBit("GenerateUseCustomSignal", "Use custom FPGA-internal signal, instead of PWM-like generator output.",
-				CypressFX3.FPGA_EXTINPUT, (short) 8, false, chip.getPrefs()));
-		extInControl.add(new SPIConfigBit("GeneratePulsePolarity", "Polarity of the generated pulse.", CypressFX3.FPGA_EXTINPUT, (short) 9,
-			false, chip.getPrefs()));
-		extInControl.add(new SPIConfigInt("GeneratePulseInterval", "Time interval between consecutive pulses.", CypressFX3.FPGA_EXTINPUT,
-			(short) 10, 27, 120, chip.getPrefs()));
-		extInControl.add(new SPIConfigInt("GeneratePulseLength", "Time length of a pulse.", CypressFX3.FPGA_EXTINPUT, (short) 11, 27, 60,
-			chip.getPrefs()));
+		extInControl.add(new SPIConfigBit("ExtInput.RunGenerator", "Enable signal generator (PWM-like).", CypressFX3.FPGA_EXTINPUT,
+			(short) 7, false, this));
+		extInControl.add(new SPIConfigBit("ExtInput.GenerateUseCustomSignal",
+			"Use custom FPGA-internal signal, instead of PWM-like generator output.", CypressFX3.FPGA_EXTINPUT, (short) 8, false, this));
+		extInControl.add(new SPIConfigBit("ExtInput.GeneratePulsePolarity", "Polarity of the generated pulse.", CypressFX3.FPGA_EXTINPUT,
+			(short) 9, false, this));
+		extInControl.add(new SPIConfigInt("ExtInput.GeneratePulseInterval", "Time interval between consecutive pulses.",
+			CypressFX3.FPGA_EXTINPUT, (short) 10, 27, 120, this));
+		extInControl.add(new SPIConfigInt("ExtInput.GeneratePulseLength", "Time length of a pulse.", CypressFX3.FPGA_EXTINPUT, (short) 11,
+			27, 60, this));
 
 		for (final SPIConfigValue cfgVal : extInControl) {
 			cfgVal.addObserver(this);
@@ -295,34 +291,34 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		// Chip diagnostic chain
-		chipControl.add(new SPIConfigInt("DigitalMux0", "Digital multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 128, 4, 0,
-			chip.getPrefs()));
-		chipControl.add(new SPIConfigInt("DigitalMux1", "Digital multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 129, 4, 0,
-			chip.getPrefs()));
-		chipControl.add(new SPIConfigInt("DigitalMux2", "Digital multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 130, 4, 0,
-			chip.getPrefs()));
-		chipControl.add(new SPIConfigInt("DigitalMux3", "Digital multiplexer 3 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 131, 4, 0,
-			chip.getPrefs()));
-		chipControl.add(
-			new SPIConfigInt("AnalogMux0", "Analog multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 132, 4, 0, chip.getPrefs()));
-		chipControl.add(
-			new SPIConfigInt("AnalogMux1", "Analog multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 133, 4, 0, chip.getPrefs()));
-		chipControl.add(
-			new SPIConfigInt("AnalogMux2", "Analog multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 134, 4, 0, chip.getPrefs()));
 		chipControl
-			.add(new SPIConfigInt("BiasMux0", "Bias multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 135, 4, 0, chip.getPrefs()));
+			.add(new SPIConfigInt("Chip.DigitalMux0", "Digital multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 128, 4, 0, this));
+		chipControl
+			.add(new SPIConfigInt("Chip.DigitalMux1", "Digital multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 129, 4, 0, this));
+		chipControl
+			.add(new SPIConfigInt("Chip.DigitalMux2", "Digital multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 130, 4, 0, this));
+		chipControl
+			.add(new SPIConfigInt("Chip.DigitalMux3", "Digital multiplexer 3 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 131, 4, 0, this));
+		chipControl
+			.add(new SPIConfigInt("Chip.AnalogMux0", "Analog multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 132, 4, 0, this));
+		chipControl
+			.add(new SPIConfigInt("Chip.AnalogMux1", "Analog multiplexer 1 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 133, 4, 0, this));
+		chipControl
+			.add(new SPIConfigInt("Chip.AnalogMux2", "Analog multiplexer 2 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 134, 4, 0, this));
+		chipControl
+			.add(new SPIConfigInt("Chip.BiasMux0", "Bias multiplexer 0 (debug).", CypressFX3.FPGA_CHIPBIAS, (short) 135, 4, 0, this));
 
-		chipControl.add(new SPIConfigBit("ResetCalibNeuron", "Turn off the integrate and fire calibration neuron (bias generator).",
-			CypressFX3.FPGA_CHIPBIAS, (short) 136, true, chip.getPrefs()));
-		chipControl.add(new SPIConfigBit("TypeNCalibNeuron",
+		chipControl.add(new SPIConfigBit("Chip.ResetCalibNeuron", "Turn off the integrate and fire calibration neuron (bias generator).",
+			CypressFX3.FPGA_CHIPBIAS, (short) 136, true, this));
+		chipControl.add(new SPIConfigBit("Chip.TypeNCalibNeuron",
 			"Make the integrate and fire calibration neuron configured to measure N type biases; otherwise measures P-type currents.",
-			CypressFX3.FPGA_CHIPBIAS, (short) 137, true, chip.getPrefs()));
-		chipControl.add(new SPIConfigBit("ResetTestPixel", "Keep the text pixel in reset.", CypressFX3.FPGA_CHIPBIAS, (short) 138, true,
-			chip.getPrefs()));
-		chipControl.add(new SPIConfigBit("AERnArow", "Use nArow in the AER state machine.", CypressFX3.FPGA_CHIPBIAS, (short) 140, true,
-			chip.getPrefs()));
-		chipControl.add(new SPIConfigBit("UseAOut", "Turn the pads for the analog MUX outputs on.", CypressFX3.FPGA_CHIPBIAS, (short) 141,
-			true, chip.getPrefs()));
+			CypressFX3.FPGA_CHIPBIAS, (short) 137, true, this));
+		chipControl.add(
+			new SPIConfigBit("Chip.ResetTestPixel", "Keep the text pixel in reset.", CypressFX3.FPGA_CHIPBIAS, (short) 138, true, this));
+		chipControl.add(
+			new SPIConfigBit("Chip.AERnArow", "Use nArow in the AER state machine.", CypressFX3.FPGA_CHIPBIAS, (short) 140, true, this));
+		chipControl.add(new SPIConfigBit("Chip.UseAOut", "Turn the pads for the analog MUX outputs on.", CypressFX3.FPGA_CHIPBIAS,
+			(short) 141, true, this));
 
 		for (final SPIConfigValue cfgVal : chipControl) {
 			cfgVal.addObserver(this);
@@ -922,12 +918,13 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 	public class VideoControl extends Observable implements Observer, HasPreference, HasPropertyTooltips {
 
-		public boolean displayEvents = getChip().getPrefs().getBoolean("VideoControl.displayEvents", true);
-		public boolean displayFrames = getChip().getPrefs().getBoolean("VideoControl.displayFrames", true);
-		public boolean separateAPSByColor = getChip().getPrefs().getBoolean("VideoControl.separateAPSByColor", false);
-		public boolean autoWhiteBalance = getChip().getPrefs().getBoolean("VideoControl.autoWhiteBalance", true);
-		public boolean colorCorrection = getChip().getPrefs().getBoolean("VideoControl.colorCorrection", true);
-		// on crappy beamer output
+		public boolean displayEvents = getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.displayEvents", true);
+		public boolean displayFrames = getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.displayFrames", true);
+
+		public boolean separateAPSByColor = getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.separateAPSByColor", false);
+		public boolean autoWhiteBalance = getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.autoWhiteBalance", true);
+		public boolean colorCorrection = getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.colorCorrection", true);
+
 		private final PropertyTooltipSupport tooltipSupport = new PropertyTooltipSupport();
 
 		public VideoControl() {
@@ -945,6 +942,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 				"Time constant in ms for autocontrast control. This is the lowpasss filter time constant for min and max image values to automatically scale image to 0-1 range.");
 		}
 
+		private String getPreferencesKey() {
+			return getChip().getClass().getSimpleName() + ".";
+		}
+
 		/**
 		 * @return the displayFrames
 		 */
@@ -959,7 +960,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		public void setDisplayFrames(final boolean displayFrames) {
 			final boolean old = this.displayFrames;
 			this.displayFrames = displayFrames;
-			getChip().getPrefs().putBoolean("VideoControl.displayFrames", displayFrames);
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.displayFrames", displayFrames);
 			if (((AEChip) getChip()).getAeViewer() != null) {
 				((AEChip) getChip()).getAeViewer().interruptViewloop();
 			}
@@ -988,17 +989,17 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		 */
 		public void setSeparateAPSByColor(final boolean separateAPSByColor) {
 			this.separateAPSByColor = separateAPSByColor;
-			getChip().getPrefs().putBoolean("VideoControl.separateAPSByColor", separateAPSByColor);
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.separateAPSByColor", separateAPSByColor);
 		}
 
 		public void setAutoWhiteBalance(final boolean autoWhiteBalance) {
 			this.autoWhiteBalance = autoWhiteBalance;
-			getChip().getPrefs().putBoolean("VideoControl.autoWhiteBalance", autoWhiteBalance);
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.autoWhiteBalance", autoWhiteBalance);
 		}
 
 		public void setColorCorrection(final boolean colorCorrection) {
 			this.colorCorrection = colorCorrection;
-			getChip().getPrefs().putBoolean("VideoControl.colorCorrection", colorCorrection);
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.colorCorrection", colorCorrection);
 		}
 
 		/**
@@ -1015,7 +1016,7 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		public void setDisplayEvents(final boolean displayEvents) {
 			final boolean old = this.displayEvents;
 			this.displayEvents = displayEvents;
-			getChip().getPrefs().putBoolean("VideoControl.displayEvents", displayEvents);
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.displayEvents", displayEvents);
 			if (((AEChip) getChip()).getAeViewer() != null) {
 				((AEChip) getChip()).getAeViewer().interruptViewloop();
 			}
@@ -1084,14 +1085,22 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 		@Override
 		public void loadPreference() {
-			setDisplayFrames(getChip().getPrefs().getBoolean("VideoControl.displayFrames", true));
-			setDisplayEvents(getChip().getPrefs().getBoolean("VideoControl.displayEvents", true));
+			setDisplayFrames(getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.displayFrames", true));
+			setDisplayEvents(getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.displayEvents", true));
+
+			setSeparateAPSByColor(getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.separateAPSByColor", false));
+			setAutoWhiteBalance(getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.autoWhiteBalance", true));
+			setColorCorrection(getChip().getPrefs().getBoolean(getPreferencesKey() + "VideoControl.colorCorrection", true));
 		}
 
 		@Override
 		public void storePreference() {
-			getChip().getPrefs().putBoolean("VideoControl.displayEvents", displayEvents);
-			getChip().getPrefs().putBoolean("VideoControl.displayFrames", displayFrames);
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.displayEvents", isDisplayEvents());
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.displayFrames", isDisplayFrames());
+
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.separateAPSByColor", isSeparateAPSByColor());
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.autoWhiteBalance", isAutoWhiteBalance());
+			getChip().getPrefs().putBoolean(getPreferencesKey() + "VideoControl.colorCorrection", isColorCorrection());
 		}
 
 		@Override

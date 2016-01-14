@@ -73,16 +73,14 @@ public class DavisTowerBaseConfig extends DavisConfig {
 		// Internal ADC only on new chips.
 		final List<SPIConfigValue> apsControlLocal = new ArrayList<>();
 
-		apsControlLocal.add(new SPIConfigBit("UseInternalADC", "Use the on-chip ADC instead of the external TI ADC.", CypressFX3.FPGA_APS,
-			(short) 34, true, chip.getPrefs()));
+		apsControlLocal.add(new SPIConfigBit("APS.UseInternalADC", "Use the on-chip ADC instead of the external TI ADC.", CypressFX3.FPGA_APS,
+			(short) 34, true, this));
+		apsControlLocal.add(new SPIConfigBit("APS.SampleEnable", "Enable Sample&Hold circuitry.", CypressFX3.FPGA_APS, (short) 35, true, this));
 		apsControlLocal
-			.add(new SPIConfigBit("SampleEnable", "Enable Sample&Hold circuitry.", CypressFX3.FPGA_APS, (short) 35, true, chip.getPrefs()));
-		apsControlLocal.add(
-			new SPIConfigInt("SampleSettle", "Sample hold time (in cycles).", CypressFX3.FPGA_APS, (short) 36, 8, 30, chip.getPrefs()));
-		apsControlLocal
-			.add(new SPIConfigInt("RampReset", "Ramp reset time (in cycles).", CypressFX3.FPGA_APS, (short) 37, 8, 10, chip.getPrefs()));
-		apsControlLocal.add(new SPIConfigBit("RampShortReset", "Only go through half the ramp for reset read.", CypressFX3.FPGA_APS,
-			(short) 38, false, chip.getPrefs()));
+			.add(new SPIConfigInt("APS.SampleSettle", "Sample hold time (in cycles).", CypressFX3.FPGA_APS, (short) 36, 8, 30, this));
+		apsControlLocal.add(new SPIConfigInt("APS.RampReset", "Ramp reset time (in cycles).", CypressFX3.FPGA_APS, (short) 37, 8, 10, this));
+		apsControlLocal.add(new SPIConfigBit("APS.RampShortReset", "Only go through half the ramp for reset read.", CypressFX3.FPGA_APS,
+			(short) 38, false, this));
 
 		for (final SPIConfigValue cfgVal : apsControlLocal) {
 			cfgVal.addObserver(this);
@@ -94,10 +92,10 @@ public class DavisTowerBaseConfig extends DavisConfig {
 		// Additional chip control bits.
 		final List<SPIConfigValue> chipControlLocal = new ArrayList<>();
 
-		chipControlLocal.add(new SPIConfigBit("SelectGrayCounter", "Select internal gray counter, if disabled, external gray code is used.",
-			CypressFX3.FPGA_CHIPBIAS, (short) 143, true, chip.getPrefs()));
-		chipControlLocal.add(new SPIConfigBit("TestADC", "Pass ADC Test Voltage to internal ADC instead of pixel voltage.",
-			CypressFX3.FPGA_CHIPBIAS, (short) 144, false, chip.getPrefs()));
+		chipControlLocal.add(new SPIConfigBit("Chip.SelectGrayCounter", "Select internal gray counter, if disabled, external gray code is used.",
+			CypressFX3.FPGA_CHIPBIAS, (short) 143, true, this));
+		chipControlLocal.add(new SPIConfigBit("Chip.TestADC", "Pass ADC Test Voltage to internal ADC instead of pixel voltage.",
+			CypressFX3.FPGA_CHIPBIAS, (short) 144, false, this));
 
 		for (final SPIConfigValue cfgVal : chipControlLocal) {
 			cfgVal.addObserver(this);

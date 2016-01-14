@@ -77,13 +77,13 @@ public class DavisRGBW640Config extends DavisTowerBaseConfig {
 		// Additional APS parameters.
 		final List<SPIConfigValue> apsControlLocal = new ArrayList<>();
 
-		apsControlLocal.add(new SPIConfigInt("Transfer_D", "Transfer time counter (3 in GS, 1 in RS).", CypressFX3.FPGA_APS, (short) 50, 16,
-			0, chip.getPrefs()));
-		apsControlLocal.add(new SPIConfigInt("RSFDSettle_D", "RS counter 0.", CypressFX3.FPGA_APS, (short) 51, 12, 0, chip.getPrefs()));
-		apsControlLocal.add(new SPIConfigInt("GSPDReset_D", "GS counter 0.", CypressFX3.FPGA_APS, (short) 52, 12, 0, chip.getPrefs()));
-		apsControlLocal.add(new SPIConfigInt("GSResetFall_D", "GS counter 1.", CypressFX3.FPGA_APS, (short) 53, 12, 0, chip.getPrefs()));
-		apsControlLocal.add(new SPIConfigInt("GSTXFall_D", "GS counter 2.", CypressFX3.FPGA_APS, (short) 54, 12, 0, chip.getPrefs()));
-		apsControlLocal.add(new SPIConfigInt("GSFDReset_D", "GS counter 3.", CypressFX3.FPGA_APS, (short) 55, 12, 0, chip.getPrefs()));
+		apsControlLocal
+			.add(new SPIConfigInt("APS.Transfer_D", "Transfer time counter (3 in GS, 1 in RS).", CypressFX3.FPGA_APS, (short) 50, 16, 0, this));
+		apsControlLocal.add(new SPIConfigInt("APS.RSFDSettle_D", "RS counter 0.", CypressFX3.FPGA_APS, (short) 51, 12, 0, this));
+		apsControlLocal.add(new SPIConfigInt("APS.GSPDReset_D", "GS counter 0.", CypressFX3.FPGA_APS, (short) 52, 12, 0, this));
+		apsControlLocal.add(new SPIConfigInt("APS.GSResetFall_D", "GS counter 1.", CypressFX3.FPGA_APS, (short) 53, 12, 0, this));
+		apsControlLocal.add(new SPIConfigInt("APS.GSTXFall_D", "GS counter 2.", CypressFX3.FPGA_APS, (short) 54, 12, 0, this));
+		apsControlLocal.add(new SPIConfigInt("APS.GSFDReset_D", "GS counter 3.", CypressFX3.FPGA_APS, (short) 55, 12, 0, this));
 
 		for (final SPIConfigValue cfgVal : apsControlLocal) {
 			cfgVal.addObserver(this);
@@ -95,12 +95,9 @@ public class DavisRGBW640Config extends DavisTowerBaseConfig {
 		// Additional chip control bits.
 		final List<SPIConfigValue> chipControlLocal = new ArrayList<>();
 
-		chipControlLocal
-			.add(new SPIConfigBit("AdjustOVG1Lo", "Adjust OVG1 Low.", CypressFX3.FPGA_CHIPBIAS, (short) 145, true, chip.getPrefs()));
-		chipControlLocal
-			.add(new SPIConfigBit("AdjustOVG2Lo", "Adjust OVG2 Low.", CypressFX3.FPGA_CHIPBIAS, (short) 146, false, chip.getPrefs()));
-		chipControlLocal
-			.add(new SPIConfigBit("AdjustTX2OVG2Hi", "Adjust TX2OVG2Hi.", CypressFX3.FPGA_CHIPBIAS, (short) 147, false, chip.getPrefs()));
+		chipControlLocal.add(new SPIConfigBit("Chip.AdjustOVG1Lo", "Adjust OVG1 Low.", CypressFX3.FPGA_CHIPBIAS, (short) 145, true, this));
+		chipControlLocal.add(new SPIConfigBit("Chip.AdjustOVG2Lo", "Adjust OVG2 Low.", CypressFX3.FPGA_CHIPBIAS, (short) 146, false, this));
+		chipControlLocal.add(new SPIConfigBit("Chip.AdjustTX2OVG2Hi", "Adjust TX2OVG2Hi.", CypressFX3.FPGA_CHIPBIAS, (short) 147, false, this));
 
 		for (final SPIConfigValue cfgVal : chipControlLocal) {
 			cfgVal.addObserver(this);
