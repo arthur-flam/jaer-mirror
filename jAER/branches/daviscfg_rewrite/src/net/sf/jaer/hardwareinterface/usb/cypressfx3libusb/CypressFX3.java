@@ -81,15 +81,6 @@ public class CypressFX3 implements AEMonitorInterface, ReaderBufferControl, USBI
 
 	protected static final Logger log = Logger.getLogger("CypressFX3");
 	protected AEChip chip;
-	// A .bix file format is needed for RAM download.
-	// The binary file format .iic (i2c) format are image files for the EEPROM.
-	// IIC files will not
-	// correctly download to RAM. Therefore they cannot be used to bootstrap a
-	// blank device.
-	// The bootstrap code is necessary in order to write the Cypress EEPROM.
-	// An Intel .hex file should also be OK for RAM download but it does not
-	// include the device descriptor TODO could be
-	// wrong
 
 	/**
 	 * A blank Cypress FX2 has VID/PID of 0x04b4/0x8613. This VID/PID pair is
@@ -1439,11 +1430,11 @@ public class CypressFX3 implements AEMonitorInterface, ReaderBufferControl, USBI
 
 		// start the thread that listens for device status information.
 		// This is only preset on FX3 devices.
-		if (getPID() == DAViSFX3HardwareInterface.PID) {
-			// asyncStatusThread = new AsyncStatusThread(this);
-			// asyncStatusThread.startThread();
-			// TODO: fix USBTransferThread to only use one thread to handle USB events.
-		}
+		// if (getPID() == DAViSFX3HardwareInterface.PID_FX3) {
+		// asyncStatusThread = new AsyncStatusThread(this);
+		// asyncStatusThread.startThread();
+		// TODO: fix USBTransferThread to only use one thread to handle USB events.
+		// }
 	}
 
 	/**

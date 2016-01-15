@@ -30,9 +30,9 @@ public class CochleaFX3HardwareInterface extends CypressFX3Biasgen {
 	}
 
 	/** The USB product ID of this device */
-	static public final short PID = (short) 0x841C;
-	static public final int REQUIRED_FIRMWARE_VERSION = 2;
-	static public final int REQUIRED_LOGIC_REVISION = 0;
+	static public final short PID_FX3 = (short) 0x841C;
+	static public final int REQUIRED_FIRMWARE_VERSION_FX3 = 2;
+	static public final int REQUIRED_LOGIC_REVISION_FX3 = 0;
 
 	/**
 	 * Starts reader buffer pool thread and enables in endpoints for AEs. This
@@ -68,7 +68,8 @@ public class CochleaFX3HardwareInterface extends CypressFX3Biasgen {
 		public RetinaAEReader(final CypressFX3 cypress) throws HardwareInterfaceException {
 			super(cypress);
 
-			checkFirmwareLogic(CochleaFX3HardwareInterface.REQUIRED_FIRMWARE_VERSION, CochleaFX3HardwareInterface.REQUIRED_LOGIC_REVISION);
+			checkFirmwareLogic(CochleaFX3HardwareInterface.REQUIRED_FIRMWARE_VERSION_FX3,
+				CochleaFX3HardwareInterface.REQUIRED_LOGIC_REVISION_FX3);
 
 			chipID = spiConfigReceive(CypressFX3.FPGA_SYSINFO, (short) 1);
 
