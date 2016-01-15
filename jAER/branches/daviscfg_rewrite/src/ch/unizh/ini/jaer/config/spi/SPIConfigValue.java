@@ -32,4 +32,9 @@ public abstract class SPIConfigValue extends AbstractConfigValue {
 		return String.format("SPIConfigValue {configName=%s, prefKey=%s, moduleAddr=%d, paramAddr=%d, numBits=%d}", getName(),
 			getPreferencesKey(), getModuleAddr(), getParamAddr(), getNumBits());
 	}
+
+	@Override
+	public synchronized void setChanged() {
+		super.setChanged();
+	}
 }

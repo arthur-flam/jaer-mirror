@@ -33,7 +33,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 import ch.unizh.ini.jaer.chip.retina.DVSTweaks;
-import ch.unizh.ini.jaer.config.AbstractConfigValue;
 import ch.unizh.ini.jaer.config.spi.SPIConfigBit;
 import ch.unizh.ini.jaer.config.spi.SPIConfigInt;
 import ch.unizh.ini.jaer.config.spi.SPIConfigValue;
@@ -64,7 +63,7 @@ import net.sf.jaer.util.PropertyTooltipSupport;
  */
 public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface, DavisTweaks, ChipControlPanel {
 	// All preferences, excluding biases.
-	protected final List<AbstractConfigValue> allPreferencesList = new ArrayList<>();
+	protected final List<SPIConfigValue> allPreferencesList = new ArrayList<>();
 
 	private final Map<SPIConfigValue, JComponent> configValueMap = new HashMap<>();
 
@@ -226,15 +225,17 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		globalShutter.addObserver(new Observer() {
 			@Override
 			public void update(final Observable gsObs, final Object arg) {
-				final CypressFX3 fx3HwIntf = (CypressFX3) getHardwareInterface();
+				if (getHardwareInterface() != null) {
+					final CypressFX3 fx3HwIntf = (CypressFX3) getHardwareInterface();
 
-				try {
-					final SPIConfigBit gsBit = (SPIConfigBit) gsObs;
+					try {
+						final SPIConfigBit gsBit = (SPIConfigBit) gsObs;
 
-					fx3HwIntf.spiConfigSend(CypressFX3.FPGA_CHIPBIAS, (short) 142, (gsBit.isSet()) ? (1) : (0));
-				}
-				catch (final HardwareInterfaceException e) {
-					net.sf.jaer.biasgen.Biasgen.log.warning("On GS update() caught " + e.toString());
+						fx3HwIntf.spiConfigSend(CypressFX3.FPGA_CHIPBIAS, (short) 142, (gsBit.isSet()) ? (1) : (0));
+					}
+					catch (final HardwareInterfaceException e) {
+						net.sf.jaer.biasgen.Biasgen.log.warning("On GS update() caught " + e.toString());
+					}
 				}
 			}
 		});
@@ -904,15 +905,18 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		for (final ShiftedSourceBiasCF sSrc : ssBiases) {
-			update(sSrc, null);
+			sSrc.setChanged();
+			sSrc.notifyObservers();
 		}
 
 		for (final Pot iPot : ipots.getPots()) {
-			update(iPot, null);
+			iPot.setChanged();
+			iPot.notifyObservers();
 		}
 
-		for (final AbstractConfigValue spiCfg : allPreferencesList) {
-			update(spiCfg, null);
+		for (final SPIConfigValue spiCfg : allPreferencesList) {
+			spiCfg.setChanged();
+			spiCfg.notifyObservers();
 		}
 	}
 
