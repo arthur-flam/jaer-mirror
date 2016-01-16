@@ -30,6 +30,8 @@ import net.sf.jaer.eventio.AEFileInputStream;
 import net.sf.jaer.eventio.AEInputStream;
 import static net.sf.jaer.eventprocessing.EventFilter.log;
 import net.sf.jaer.eventprocessing.EventFilter2D;
+import net.sf.jaer.graphics.AEChipRenderer;
+import net.sf.jaer.graphics.AEFrameChipRenderer;
 import net.sf.jaer.graphics.AEViewer;
 import net.sf.jaer.graphics.AbstractAEPlayer;
 import net.sf.jaer.graphics.FrameAnnotater;
@@ -95,9 +97,13 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
     // Use IMU gyro values to estimate motion flow.
     ImuFlowEstimator imuFlowEstimator;
 
+    // Focal length of camera lens in mm needed to convert rad/s to pixel/s.
+    // Conversion factor is atan(pixelWidth/focalLength).
+    private float lensFocalLengthMm = 4.5f;
+
     // Focal length of camera lens needed to convert rad/s to pixel/s.
     // Conversion factor is atan(pixelWidth/focalLength).
-    private final static float lensFocalLengthMm = 4.5f;
+    private float radPerPixel;
 
     private boolean addedViewerPropertyChangeListener = false;
     private boolean addTimeStampsResetPropertyChangeListener = false;
@@ -132,9 +138,12 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
     // deviates from ground truth by more than epsilon.
     float epsilon = getFloat("epsilon", 10f);
 
+    /**
+     * Used for logging motion vector events to a text log file
+     */
     protected TobiLogger motionVectorEventLogger = null;
 
-    final String filterClassName;
+       final String filterClassName;
 
     private boolean exportedFlowToMatlab;
     private double[][] vxOut = null;
@@ -171,7 +180,7 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
         setPropertyTooltip(smoo, "speedControl_speedMixingFactor", "speeds computed are mixed with old values with this factor");
         setPropertyTooltip(imu, "discardOutliersEnabled", "discard measured local motion vector if it deviates from IMU estimate");
         setPropertyTooltip(imu, "epsilon", "threshold angle in degree. Discard measured optical flow vector if it deviates from IMU-estimate by more than epsilon");
-        // check lastLoggingFolder to see if it really exists, if not, default to user.dir
+        setPropertyTooltip(imu, "lensFocalLengthMm", "lens focal length in mm. Used for computing the IMU flow from pan and tilt camera rotations. 4.5mm is focal length for dataset data.");
         File lf = new File(loggingFolder);
         if (!lf.exists() || !lf.isDirectory()) {
             log.log(Level.WARNING, "loggingFolder {0} doesn't exist or isn't a directory, defaulting to {1}", new Object[]{lf, lf});
@@ -315,10 +324,6 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
         private float dtS;
         private int lastTsIMU;
         private int tsIMU;
-
-        // Focal length of camera lens needed to convert rad/s to pixel/s.
-        // Conversion factor is atan(pixelWidth/focalLength).
-        private float radPerPixel;
 
         // Highpass filters for angular rates.   
         private float panRate, tiltRate, rollRate; // In deg/s
@@ -629,8 +634,11 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
                 motionFlowStatistics.angularError.getStdDev()}));
             gl.glPopMatrix();
         }
+
+ 
     }
 
+ 
     synchronized void setupFilter(EventPacket in) {
         addListeners(chip);
         inItr = in.iterator();
@@ -702,8 +710,8 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
         if (showGlobalEnabled) {
             motionFlowStatistics.globalMotion.update(vx, vy, v, eout.x, eout.y);
         }
-        if(motionVectorEventLogger!=null && motionVectorEventLogger.isEnabled()){
-            String s=String.format("%d %d %d %d %.3g %.3g %.3g %d",eout.timestamp,eout.x,eout.y,eout.type,eout.velocity.x, eout.velocity.y, eout.speed, eout.hasDirection?1:0);
+        if (motionVectorEventLogger != null && motionVectorEventLogger.isEnabled()) {
+            String s = String.format("%d %d %d %d %.3g %.3g %.3g %d", eout.timestamp, eout.x, eout.y, eout.type, eout.velocity.x, eout.velocity.y, eout.speed, eout.hasDirection ? 1 : 0);
             motionVectorEventLogger.log(s);
         }
     }
@@ -766,7 +774,7 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
         if (ret == JFileChooser.APPROVE_OPTION) {
             File file = fc.getSelectedFile();
             putString("lastFile", file.toString());
-            motionVectorEventLogger = new TobiLogger(file.getName(), file.getPath());
+            motionVectorEventLogger = new TobiLogger(file.getPath(), "Motion vector events output from normal optical flow method");
             motionVectorEventLogger.setNanotimeEnabled(false);
             motionVectorEventLogger.setHeaderLine("system_time(ms) timestamp(us) x y type vx(pps) vy(pps) speed(pps) validity");
             motionVectorEventLogger.setEnabled(true);
@@ -780,15 +788,16 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
             return;
         }
         motionVectorEventLogger.setEnabled(false);
-        motionVectorEventLogger=null;
+        motionVectorEventLogger = null;
     }
-    
-    protected void logMotionVectorEvents(EventPacket ep){
-        if(motionVectorEventLogger==null) return;
-        
-        for(Object o:ep){
-            
-            
+
+    protected void logMotionVectorEvents(EventPacket ep) {
+        if (motionVectorEventLogger == null) {
+            return;
+        }
+
+        for (Object o : ep) {
+
         }
     }
 
@@ -1049,4 +1058,21 @@ abstract public class AbstractMotionFlowIMU extends EventFilter2D implements Obs
         putInt("yMax", yMax);
     }
     // </editor-fold>
+
+    /**
+     * @return the lensFocalLengthMm
+     */
+    public float getLensFocalLengthMm() {
+        return lensFocalLengthMm;
+    }
+
+    /**
+     * @param aLensFocalLengthMm the lensFocalLengthMm to set
+     */
+    public void setLensFocalLengthMm(float aLensFocalLengthMm) {
+        lensFocalLengthMm = aLensFocalLengthMm;
+        radPerPixel = (float) Math.atan(chip.getPixelWidthUm() / (1000 * lensFocalLengthMm));
+    }
+
+  
 }
