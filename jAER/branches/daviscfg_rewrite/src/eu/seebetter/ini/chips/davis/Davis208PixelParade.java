@@ -47,8 +47,8 @@ public class Davis208PixelParade extends DavisBaseCamera {
 		davisRenderer.setMaxADC(DavisChip.MAX_ADC);
 		setRenderer(davisRenderer);
 
-		setApsFirstPixelReadOut(new Point(getSizeX() - 1, getSizeY() - 1));
-		setApsLastPixelReadOut(new Point(0, 0));
+		setApsFirstPixelReadOut(new Point(getSizeX() - 1, 0));
+		setApsLastPixelReadOut(new Point(0, getSizeY() - 1));
 	}
 
 	/**
@@ -260,8 +260,7 @@ public class Davis208PixelParade extends DavisBaseCamera {
 						}
 					}
 
-					if (pixLast && (readoutType == ApsDvsEvent.ReadoutType.ResetRead)
-						&& getDavisConfig().isGlobalShutter()) {
+					if (pixLast && (readoutType == ApsDvsEvent.ReadoutType.ResetRead) && getDavisConfig().isGlobalShutter()) {
 						// global shutter start of exposureControlRegister (SOE)
 						createApsFlagEvent(outItr, ApsDvsEvent.ReadoutType.SOE, timestamp);
 						frameIntervalUs = timestamp - frameExposureStartTimestampUs;
