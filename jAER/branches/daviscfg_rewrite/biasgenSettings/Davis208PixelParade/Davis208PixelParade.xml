@@ -142,12 +142,24 @@
                 <entry key="Davis208PixelParade.AddressedIPotCF.ReadoutBufBP.LowCurrent" value="false"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.ReadoutBufBP.Sex" value="P"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.ReadoutBufBP.Type" value="NORMAL"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.BitValueCoarse" value="2"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.BitValueFine" value="20"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.Enabled" value="true"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.LowCurrent" value="false"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.Sex" value="N"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.Type" value="NORMAL"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefrBp.BitValueCoarse" value="3"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefrBp.BitValueFine" value="25"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefrBp.Enabled" value="true"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefrBp.LowCurrent" value="false"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefrBp.Sex" value="P"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefrBp.Type" value="NORMAL"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RegBiasBp.BitValueCoarse" value="2"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RegBiasBp.BitValueFine" value="20"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RegBiasBp.Enabled" value="true"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RegBiasBp.LowCurrent" value="false"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RegBiasBp.Sex" value="N"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RegBiasBp.Type" value="NORMAL"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.biasBuffer.BitValueCoarse" value="0"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.biasBuffer.BitValueFine" value="255"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.biasBuffer.Enabled" value="true"/>
@@ -165,6 +177,11 @@
                 <entry key="Davis208PixelParade.Chip.DigitalMux3" value="0"/>
                 <entry key="Davis208PixelParade.Chip.ResetCalibNeuron" value="true"/>
                 <entry key="Davis208PixelParade.Chip.ResetTestPixel" value="true"/>
+                <entry key="Davis208PixelParade.Chip.SelBiasRefxD" value="false"/>
+                <entry key="Davis208PixelParade.Chip.SelHpxD" value="false"/>
+                <entry key="Davis208PixelParade.Chip.SelPosFbxD" value="false"/>
+                <entry key="Davis208PixelParade.Chip.SelPreAmpAvgxD" value="false"/>
+                <entry key="Davis208PixelParade.Chip.SelSensexD" value="true"/>
                 <entry key="Davis208PixelParade.Chip.SelectGrayCounter" value="true"/>
                 <entry key="Davis208PixelParade.Chip.TestADC" value="false"/>
                 <entry key="Davis208PixelParade.Chip.TypeNCalibNeuron" value="false"/>
@@ -226,6 +243,10 @@
                 <entry key="Davis208PixelParade.VDACBias.AdcTestVoltage.VdacBitValue" value="21"/>
                 <entry key="Davis208PixelParade.VDACBias.ApsCas.BufBitValue" value="6"/>
                 <entry key="Davis208PixelParade.VDACBias.ApsCas.VdacBitValue" value="21"/>
+                <entry key="Davis208PixelParade.VDACBias.RefSsbxBv.BufBitValue" value="5"/>
+                <entry key="Davis208PixelParade.VDACBias.RefSsbxBv.VdacBitValue" value="11"/>
+                <entry key="Davis208PixelParade.VDACBias.ResetHpxBv.BufBitValue" value="7"/>
+                <entry key="Davis208PixelParade.VDACBias.ResetHpxBv.VdacBitValue" value="63"/>
                 <entry key="Davis208PixelParade.VDACBias.apsOverflowLevel.BufBitValue" value="6"/>
                 <entry key="Davis208PixelParade.VDACBias.apsOverflowLevel.VdacBitValue" value="27"/>
                 <entry key="Davis208PixelParade.VideoControl.autoWhiteBalance" value="true"/>
