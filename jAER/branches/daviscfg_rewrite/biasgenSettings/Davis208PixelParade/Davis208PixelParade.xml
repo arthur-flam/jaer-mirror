@@ -23,7 +23,7 @@
                 <entry key="Davis208PixelParade.APS.ResetRead" value="true"/>
                 <entry key="Davis208PixelParade.APS.ResetSettle" value="10"/>
                 <entry key="Davis208PixelParade.APS.RowSettle" value="10"/>
-                <entry key="Davis208PixelParade.APS.Run" value="true"/>
+                <entry key="Davis208PixelParade.APS.Run" value="false"/>
                 <entry key="Davis208PixelParade.APS.SampleEnable" value="true"/>
                 <entry key="Davis208PixelParade.APS.SampleSettle" value="30"/>
                 <entry key="Davis208PixelParade.APS.UseInternalADC" value="true"/>
@@ -142,7 +142,7 @@
                 <entry key="Davis208PixelParade.AddressedIPotCF.ReadoutBufBP.LowCurrent" value="false"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.ReadoutBufBP.Sex" value="P"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.ReadoutBufBP.Type" value="NORMAL"/>
-                <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.BitValueCoarse" value="2"/>
+                <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.BitValueCoarse" value="5"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.BitValueFine" value="20"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.Enabled" value="true"/>
                 <entry key="Davis208PixelParade.AddressedIPotCF.RefSsbxBn.LowCurrent" value="false"/>
@@ -177,7 +177,7 @@
                 <entry key="Davis208PixelParade.Chip.DigitalMux3" value="0"/>
                 <entry key="Davis208PixelParade.Chip.ResetCalibNeuron" value="true"/>
                 <entry key="Davis208PixelParade.Chip.ResetTestPixel" value="true"/>
-                <entry key="Davis208PixelParade.Chip.SelBiasRefxD" value="false"/>
+                <entry key="Davis208PixelParade.Chip.SelBiasRefxD" value="true"/>
                 <entry key="Davis208PixelParade.Chip.SelHpxD" value="false"/>
                 <entry key="Davis208PixelParade.Chip.SelPosFbxD" value="false"/>
                 <entry key="Davis208PixelParade.Chip.SelPreAmpAvgxD" value="false"/>
@@ -192,7 +192,7 @@
                 <entry key="Davis208PixelParade.DVS.AckExtensionRow" value="1"/>
                 <entry key="Davis208PixelParade.DVS.ExternalAERControl" value="false"/>
                 <entry key="Davis208PixelParade.DVS.FilterBackgroundActivity" value="false"/>
-                <entry key="Davis208PixelParade.DVS.FilterBackgroundActivityDeltaTime" value="20000"/>
+                <entry key="Davis208PixelParade.DVS.FilterBackgroundActivityDeltaTime" value="100"/>
                 <entry key="Davis208PixelParade.DVS.FilterRowOnlyEvents" value="true"/>
                 <entry key="Davis208PixelParade.DVS.Run" value="true"/>
                 <entry key="Davis208PixelParade.DVS.WaitOnTransferStall" value="false"/>
