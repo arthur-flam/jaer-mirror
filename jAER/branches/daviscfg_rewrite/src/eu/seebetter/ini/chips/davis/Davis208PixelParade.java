@@ -14,6 +14,7 @@ import net.sf.jaer.event.ApsDvsEventRGBW;
 import net.sf.jaer.event.EventPacket;
 import net.sf.jaer.event.OutputEventIterator;
 import net.sf.jaer.event.TypedEvent;
+import net.sf.jaer.graphics.AEFrameChipRenderer;
 import net.sf.jaer.hardwareinterface.HardwareInterface;
 
 /**
@@ -37,13 +38,14 @@ public class Davis208PixelParade extends DavisBaseCamera {
 		setSizeX(Davis208PixelParade.WIDTH_PIXELS);
 		setSizeY(Davis208PixelParade.HEIGHT_PIXELS);
 
-		setEventClass(ApsDvsEventRGBW.class);
+		//setEventClass(ApsDvsEventRGBW.class);
 
-		setEventExtractor(new Davis208PixelParadeEventExtractor(this));
+		//setEventExtractor(new Davis208PixelParadeEventExtractor(this));
 
 		setBiasgen(davisConfig = new Davis208PixelParadeConfig(this));
 
-		davisRenderer = new Davis208PixelParadeRenderer(this);
+		//davisRenderer = new Davis208PixelParadeRenderer(this);
+		davisRenderer = new AEFrameChipRenderer(this);
 		davisRenderer.setMaxADC(DavisChip.MAX_ADC);
 		setRenderer(davisRenderer);
 
