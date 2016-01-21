@@ -95,7 +95,7 @@ abstract public class AbstractMotionFlow extends AbstractMotionFlowIMU {
                              ts1 = ts = lastTimesMap[x][y][1];
                             ts = ts0 > ts1 ? ts0 : ts1;
                     }
-                    if (ts == 0) {
+                    if (ts == Integer.MIN_VALUE) {
                         continue; // don't bother for uninitialized timestamps
                     }
                     float v = (1 - ((float) (maxTs - ts) / maxDtThreshold)); // TODO should be maxDtThreshold
@@ -112,7 +112,7 @@ abstract public class AbstractMotionFlow extends AbstractMotionFlowIMU {
                 }
             }
 
-        }
+        } 
     }
 
     // Compute the convolution coefficients of a two-dimensional Savitzky-Golay
@@ -187,7 +187,6 @@ abstract public class AbstractMotionFlow extends AbstractMotionFlowIMU {
 //        computeSavitzkyGolayCoefficients();
 //    }
 //    // </editor-fold>
-
     /**
      * @return the showTimestampMap
      */
@@ -245,6 +244,17 @@ abstract public class AbstractMotionFlow extends AbstractMotionFlowIMU {
             AEFrameChipRenderer frameRenderer = (AEFrameChipRenderer) renderer;
             frameRenderer.setAnnotateAlpha(showTimestampMapAlpha);
         }
+    }
+
+    @Override
+    public synchronized void setFilterEnabled(boolean yes) {
+        super.setFilterEnabled(yes); //To change body of generated methods, choose Tools | Templates.
+        AEChipRenderer renderer;
+        renderer = (AEChipRenderer) chip.getRenderer();
+        if (renderer == null) {
+            return;
+        }
+        renderer.setExternalRenderer(showTimestampMap && yes);
     }
 
 }
