@@ -65,6 +65,7 @@ public class ChipDataFilePreview extends JPanel implements PropertyChangeListene
      * @param chip the AEChip to preview.
      */
     public ChipDataFilePreview(JFileChooser jfc, AEChip chip) {
+        this.chip = chip;
         canvas = new ChipCanvas(chip);
 //        if(chip.getCanvas().getDisplayMethod()==null){
 //            canvas.setDisplayMethod(new ChipRendererDisplayMethod(canvas)); // needs a default display method
@@ -239,6 +240,8 @@ public class ChipDataFilePreview extends JPanel implements PropertyChangeListene
                     }
                 }
                 if (aeRaw != null) {
+                    extractor = chip.getEventExtractor();  // Desipte extrator is initiliazed at first, if jAER 3.0 file used, then Jaer3BufferParser
+                                                           // will update the extrator, so we need to update this value here.
                     ae = extractor.extractPacket(aeRaw);
                 }
             }
