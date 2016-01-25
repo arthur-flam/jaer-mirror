@@ -344,7 +344,7 @@ public class CochleaLP extends CochleaChip implements Observer {
 
 			// Create the 64 cochlea channels.
 			for (int i = 0; i < 64; i++) {
-				cochleaChannels.add(new CochleaChannel("Channel " + i, "Cochlea channel " + i + " configuration.", i));
+				cochleaChannels.add(new CochleaChannel("Channel " + i, "Cochlea channel " + i + " configuration.", i, this));
 			}
 
 			for (final CochleaChannel chan : cochleaChannels) {
@@ -681,6 +681,7 @@ public class CochleaLP extends CochleaChip implements Observer {
 
 	public class CochleaChannel extends AbstractConfigValue implements ConfigBase {
 
+		private final Biasgen bgen;
 		private final int channelAddress;
 
 		private int configValue;
@@ -711,10 +712,11 @@ public class CochleaLP extends CochleaChip implements Observer {
 
 		private CochleaLPControlPanel.CochleaChannelControlPanel controlPanel = null;
 
-		public CochleaChannel(final String configName, final String toolTip, final int channelAddr) {
+		public CochleaChannel(final String configName, final String toolTip, final int channelAddr, final Biasgen biasgen) {
 			super(configName, toolTip, (AEChip) biasgen.getChip());
 
 			channelAddress = channelAddr;
+			bgen = biasgen;
 
 			loadPreference();
 			getPrefs().addPreferenceChangeListener(this);
@@ -880,7 +882,7 @@ public class CochleaLP extends CochleaChip implements Observer {
 
 		@Override
 		public String getPreferencesKey() {
-			return biasgen.getChip().getClass().getSimpleName() + "." + getName();
+			return bgen.getChip().getClass().getSimpleName() + "." + getName();
 		}
 
 		@Override
