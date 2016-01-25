@@ -32,9 +32,9 @@ import javax.swing.undo.UndoableEditSupport;
 
 import ch.unizh.ini.jaer.chip.cochlea.CochleaLP.Biasgen;
 import ch.unizh.ini.jaer.chip.cochlea.CochleaLP.CochleaChannel;
-import ch.unizh.ini.jaer.chip.cochlea.CochleaLP.SPIConfigBit;
-import ch.unizh.ini.jaer.chip.cochlea.CochleaLP.SPIConfigInt;
-import ch.unizh.ini.jaer.chip.cochlea.CochleaLP.SPIConfigValue;
+import ch.unizh.ini.jaer.config.spi.SPIConfigBit;
+import ch.unizh.ini.jaer.config.spi.SPIConfigInt;
+import ch.unizh.ini.jaer.config.spi.SPIConfigValue;
 import net.sf.jaer.biasgen.BiasgenPanel;
 import net.sf.jaer.biasgen.coarsefine.ShiftedSourceControlsCF;
 
@@ -67,7 +67,7 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 			}
 		});
 
-		makeSPIBitConfig(biasgen.biasForceEnable, onchipBiasgenPanel);
+		SPIConfigBit.makeSPIBitConfig(biasgen.biasForceEnable, onchipBiasgenPanel, configValueMap, getBiasgen());
 
 		onchipBiasgenPanel.add(new ShiftedSourceControlsCF(biasgen.ssBiases[0]));
 		onchipBiasgenPanel.add(new ShiftedSourceControlsCF(biasgen.ssBiases[1]));
@@ -76,35 +76,35 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 
 		onchipBiasgenPanel.add(Box.createVerticalGlue()); // push up to prevent expansion of PotPanel
 
-		makeSPIBitConfig(biasgen.dacRun, offchipDACPanel);
+		SPIConfigBit.makeSPIBitConfig(biasgen.dacRun, offchipDACPanel, configValueMap, getBiasgen());
 
 		biasgen.setPotArray(biasgen.vpots);
 		offchipDACPanel.add(new BiasgenPanel(getBiasgen()));
 
 		for (final SPIConfigValue cfgVal : biasgen.scannerControl) {
 			if (cfgVal instanceof SPIConfigBit) {
-				makeSPIBitConfig((SPIConfigBit) cfgVal, scannerPanel);
+				SPIConfigBit.makeSPIBitConfig((SPIConfigBit) cfgVal, scannerPanel, configValueMap, getBiasgen());
 			}
 			else if (cfgVal instanceof SPIConfigInt) {
-				makeSPIIntConfig((SPIConfigInt) cfgVal, scannerPanel);
+				SPIConfigInt.makeSPIIntConfig((SPIConfigInt) cfgVal, scannerPanel, configValueMap, getBiasgen());
 			}
 		}
 
 		for (final SPIConfigValue cfgVal : biasgen.aerControl) {
 			if (cfgVal instanceof SPIConfigBit) {
-				makeSPIBitConfig((SPIConfigBit) cfgVal, aerPanel);
+				SPIConfigBit.makeSPIBitConfig((SPIConfigBit) cfgVal, aerPanel, configValueMap, getBiasgen());
 			}
 			else if (cfgVal instanceof SPIConfigInt) {
-				makeSPIIntConfig((SPIConfigInt) cfgVal, aerPanel);
+				SPIConfigInt.makeSPIIntConfig((SPIConfigInt) cfgVal, aerPanel, configValueMap, getBiasgen());
 			}
 		}
 
 		for (final SPIConfigValue cfgVal : biasgen.chipDiagChain) {
 			if (cfgVal instanceof SPIConfigBit) {
-				makeSPIBitConfig((SPIConfigBit) cfgVal, chipDiagPanel);
+				SPIConfigBit.makeSPIBitConfig((SPIConfigBit) cfgVal, chipDiagPanel, configValueMap, getBiasgen());
 			}
 			else if (cfgVal instanceof SPIConfigInt) {
-				makeSPIIntConfig((SPIConfigInt) cfgVal, chipDiagPanel);
+				SPIConfigInt.makeSPIIntConfig((SPIConfigInt) cfgVal, chipDiagPanel, configValueMap, getBiasgen());
 			}
 		}
 
@@ -117,8 +117,10 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 		final CochleaChannelControlPanel gPan = new CochleaChannelControlPanel(null); // global control
 		colPan.add(gPan);
 
-		for (final CochleaChannel chan : biasgen.cochleaChannels) { // TODO add preference change or update listener to
-																	// synchronize when config is loaded
+		for (final CochleaChannel chan : biasgen.cochleaChannels) {
+			// TODO add preference change or update listener to
+			// synchronize when config is loaded
+
 			// TODO add undo/redo support for channels
 
 			final CochleaChannelControlPanel cPan = new CochleaChannelControlPanel(chan);
@@ -140,44 +142,6 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 		setSelectedIndex(chip.getPrefs().getInt("CochleaLPControlPanel.bgTabbedPaneSelectedIndex", 0));
 	}
 
-	private static final int TF_MAX_HEIGHT = 15;
-	private static final int TF_HEIGHT = 6;
-	private static final int TF_MIN_W = 15, TF_PREF_W = 20, TF_MAX_W = 40;
-
-	private void makeSPIBitConfig(final SPIConfigBit bitVal, final JPanel panel) {
-		final JRadioButton but = new JRadioButton("<html>" + bitVal.getName() + ": " + bitVal.getDescription());
-		but.setToolTipText("<html>" + bitVal.toString() + "<br>Select to set bit, clear to clear bit.");
-		but.setSelected(bitVal.isSet());
-		but.setAlignmentX(Component.LEFT_ALIGNMENT);
-		but.addActionListener(new SPIConfigBitAction(bitVal));
-
-		panel.add(but);
-		configValueMap.put(bitVal, but);
-		bitVal.addObserver(this);
-	}
-
-	private void makeSPIIntConfig(final SPIConfigInt intVal, final JPanel panel) {
-		final JPanel pan = new JPanel();
-		pan.setAlignmentX(Component.LEFT_ALIGNMENT);
-		pan.setLayout(new BoxLayout(pan, BoxLayout.X_AXIS));
-
-		final JLabel label = new JLabel(intVal.getName());
-		label.setToolTipText("<html>" + intVal.toString() + "<br>" + intVal.getDescription()
-			+ "<br>Enter value or use mouse wheel or arrow keys to change value.");
-		pan.add(label);
-
-		final JTextField tf = new JTextField();
-		tf.setText(Integer.toString(intVal.get()));
-		tf.setPreferredSize(new Dimension(CochleaLPControlPanel.TF_PREF_W, CochleaLPControlPanel.TF_HEIGHT));
-		tf.setMaximumSize(new Dimension(CochleaLPControlPanel.TF_MAX_W, CochleaLPControlPanel.TF_MAX_HEIGHT));
-		tf.addActionListener(new SPIConfigIntAction(intVal));
-		pan.add(tf);
-
-		panel.add(pan);
-		configValueMap.put(intVal, tf);
-		intVal.addObserver(this);
-	}
-
 	/**
 	 * @return the biasgen
 	 */
@@ -185,36 +149,32 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 		return biasgen;
 	}
 
-	private void setFileModified() {
-		if ((chip != null) && (chip.getAeViewer() != null) && (chip.getAeViewer().getBiasgenFrame() != null)) {
-			chip.getAeViewer().getBiasgenFrame().setFileModified(true);
-		}
-	}
-
 	/**
 	 * Handles updates to GUI controls from any source, including preference
 	 * changes
 	 */
 	@Override
-	public void update(final Observable observable, final Object object) {
+	public synchronized void update(final Observable observable, final Object object) {
 		try {
 			if (observable instanceof SPIConfigBit) {
-				final SPIConfigBit bitVal = (SPIConfigBit) observable;
+				final SPIConfigBit cfgBit = (SPIConfigBit) observable;
 
-				final JRadioButton but = (JRadioButton) configValueMap.get(bitVal);
-
-				but.setSelected(bitVal.isSet());
+				// Ensure GUI is up-to-date.
+				if (configValueMap.containsKey(cfgBit)) {
+					((JRadioButton) configValueMap.get(cfgBit)).setSelected(cfgBit.isSet());
+				}
 			}
 			else if (observable instanceof SPIConfigInt) {
-				final SPIConfigInt intVal = (SPIConfigInt) observable;
+				final SPIConfigInt cfgInt = (SPIConfigInt) observable;
 
-				final JTextField tf = (JTextField) configValueMap.get(intVal);
-
-				tf.setText(Integer.toString(intVal.get()));
+				// Ensure GUI is up-to-date.
+				if (configValueMap.containsKey(cfgInt)) {
+					((JTextField) configValueMap.get(cfgInt)).setText(Integer.toString(cfgInt.get()));
+				}
 			}
 			else if (observable instanceof CochleaChannel) {
-				// log.info("observable=" + observable + " object=" + object); // TODO: ignore for now.
 				final CochleaChannel c = (CochleaChannel) observable;
+
 				if (c.getControlPanel() != null) {
 					c.getControlPanel().updateGUI();
 				}
@@ -228,48 +188,9 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 		}
 	}
 
-	private class SPIConfigBitAction implements ActionListener {
-
-		private final SPIConfigBit bitConfig;
-
-		SPIConfigBitAction(final SPIConfigBit bitCfg) {
-			bitConfig = bitCfg;
-		}
-
-		@Override
-		public void actionPerformed(final ActionEvent e) {
-			final JRadioButton button = (JRadioButton) e.getSource();
-			bitConfig.set(button.isSelected()); // TODO add undo
-			setFileModified();
-		}
-	}
-
-	private class SPIConfigIntAction implements ActionListener {
-
-		private final SPIConfigInt intConfig;
-
-		SPIConfigIntAction(final SPIConfigInt intCfg) {
-			intConfig = intCfg;
-		}
-
-		@Override
-		public void actionPerformed(final ActionEvent e) {
-			final JTextField tf = (JTextField) e.getSource();
-
-			try {
-				intConfig.set(Integer.parseInt(tf.getText())); // TODO add undo
-				setFileModified();
-
-				tf.setBackground(Color.white);
-			}
-			catch (final Exception ex) {
-				tf.selectAll();
-				tf.setBackground(Color.red);
-
-				log.warning(ex.toString());
-			}
-		}
-	}
+	private static final int TF_MAX_HEIGHT = 15;
+	private static final int TF_HEIGHT = 6;
+	private static final int TF_MIN_W = 15, TF_PREF_W = 20, TF_MAX_W = 40;
 
 	/**
 	 * Complex class to control a single channel of cochlea, enable key and
@@ -277,10 +198,8 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 	 */
 	public class CochleaChannelControlPanel extends JPanel implements StateEditable {
 
-		/**
-		 *
-		 */
 		private static final long serialVersionUID = -5426824180502211200L;
+
 		final JRadioButton but = new JRadioButton();
 		final JTextField tf0 = new JTextField();
 		final JTextField tf1 = new JTextField();
@@ -346,7 +265,7 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 					else {
 						chan.setComparatorSelfOscillationEnable(button.isSelected());
 					}
-					setFileModified();
+					chan.setFileModified();
 				}
 			});
 			add(but);
@@ -526,7 +445,7 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 							return;
 					}
 
-					setFileModified();
+					channel.setFileModified();
 
 					tf.setBackground(Color.white);
 				}
@@ -618,7 +537,7 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 							return;
 					}
 
-					setFileModified();
+					channel.setFileModified();
 
 				}
 				catch (final Exception ex) {
@@ -711,7 +630,7 @@ public final class CochleaLPControlPanel extends JTabbedPane implements Observer
 							return;
 					}
 
-					setFileModified();
+					channel.setFileModified();
 
 				}
 				catch (final Exception ex) {

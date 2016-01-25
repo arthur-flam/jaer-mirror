@@ -6,11 +6,6 @@
 package eu.seebetter.ini.chips.davis;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeSupport;
@@ -429,10 +424,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 		for (final SPIConfigValue cfgVal : muxControl) {
 			if (cfgVal instanceof SPIConfigBit) {
-				makeSPIBitConfig((SPIConfigBit) cfgVal, muxPanel);
+				SPIConfigBit.makeSPIBitConfig((SPIConfigBit) cfgVal, muxPanel, configValueMap, this);
 			}
 			else if (cfgVal instanceof SPIConfigInt) {
-				makeSPIIntConfig((SPIConfigInt) cfgVal, muxPanel);
+				SPIConfigInt.makeSPIIntConfig((SPIConfigInt) cfgVal, muxPanel, configValueMap, this);
 			}
 		}
 
@@ -443,10 +438,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 		for (final SPIConfigValue cfgVal : dvsControl) {
 			if (cfgVal instanceof SPIConfigBit) {
-				makeSPIBitConfig((SPIConfigBit) cfgVal, dvsPanel);
+				SPIConfigBit.makeSPIBitConfig((SPIConfigBit) cfgVal, dvsPanel, configValueMap, this);
 			}
 			else if (cfgVal instanceof SPIConfigInt) {
-				makeSPIIntConfig((SPIConfigInt) cfgVal, dvsPanel);
+				SPIConfigInt.makeSPIIntConfig((SPIConfigInt) cfgVal, dvsPanel, configValueMap, this);
 			}
 		}
 
@@ -457,10 +452,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 		for (final SPIConfigValue cfgVal : apsControl) {
 			if (cfgVal instanceof SPIConfigBit) {
-				makeSPIBitConfig((SPIConfigBit) cfgVal, apsPanel);
+				SPIConfigBit.makeSPIBitConfig((SPIConfigBit) cfgVal, apsPanel, configValueMap, this);
 			}
 			else if (cfgVal instanceof SPIConfigInt) {
-				makeSPIIntConfig((SPIConfigInt) cfgVal, apsPanel);
+				SPIConfigInt.makeSPIIntConfig((SPIConfigInt) cfgVal, apsPanel, configValueMap, this);
 			}
 		}
 
@@ -478,10 +473,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 		for (final SPIConfigValue cfgVal : extInControl) {
 			if (cfgVal instanceof SPIConfigBit) {
-				makeSPIBitConfig((SPIConfigBit) cfgVal, extPanel);
+				SPIConfigBit.makeSPIBitConfig((SPIConfigBit) cfgVal, extPanel, configValueMap, this);
 			}
 			else if (cfgVal instanceof SPIConfigInt) {
-				makeSPIIntConfig((SPIConfigInt) cfgVal, extPanel);
+				SPIConfigInt.makeSPIIntConfig((SPIConfigInt) cfgVal, extPanel, configValueMap, this);
 			}
 		}
 
@@ -492,10 +487,10 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 
 		for (final SPIConfigValue cfgVal : chipControl) {
 			if (cfgVal instanceof SPIConfigBit) {
-				makeSPIBitConfig((SPIConfigBit) cfgVal, chipPanel);
+				SPIConfigBit.makeSPIBitConfig((SPIConfigBit) cfgVal, chipPanel, configValueMap, this);
 			}
 			else if (cfgVal instanceof SPIConfigInt) {
-				makeSPIIntConfig((SPIConfigInt) cfgVal, chipPanel);
+				SPIConfigInt.makeSPIIntConfig((SPIConfigInt) cfgVal, chipPanel, configValueMap, this);
 			}
 		}
 
@@ -1245,94 +1240,6 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		}
 
 		return (ret);
-	}
-
-	private static final int TF_MAX_HEIGHT = 15;
-	private static final int TF_HEIGHT = 6;
-	private static final int TF_PREF_W = 20, TF_MAX_W = 40;
-
-	private void makeSPIBitConfig(final SPIConfigBit bitVal, final JPanel panel) {
-		final JRadioButton but = new JRadioButton("<html>" + bitVal.getName() + ": " + bitVal.getDescription());
-		but.setToolTipText("<html>" + bitVal.toString() + "<br>Select to set bit, clear to clear bit.");
-		but.setSelected(bitVal.isSet());
-		but.setAlignmentX(Component.LEFT_ALIGNMENT);
-		but.addActionListener(new SPIConfigBitAction(bitVal));
-
-		panel.add(but);
-		configValueMap.put(bitVal, but);
-		bitVal.addObserver(this);
-	}
-
-	private void makeSPIIntConfig(final SPIConfigInt intVal, final JPanel panel) {
-		final JPanel pan = new JPanel();
-		pan.setAlignmentX(Component.LEFT_ALIGNMENT);
-		pan.setLayout(new BoxLayout(pan, BoxLayout.X_AXIS));
-
-		final JLabel label = new JLabel(intVal.getName());
-		label.setToolTipText("<html>" + intVal.toString() + "<br>" + intVal.getDescription()
-			+ "<br>Enter value or use mouse wheel or arrow keys to change value.");
-		pan.add(label);
-
-		final JTextField tf = new JTextField();
-		tf.setText(Integer.toString(intVal.get()));
-		tf.setPreferredSize(new Dimension(DavisConfig.TF_PREF_W, DavisConfig.TF_HEIGHT));
-		tf.setMaximumSize(new Dimension(DavisConfig.TF_MAX_W, DavisConfig.TF_MAX_HEIGHT));
-		tf.addActionListener(new SPIConfigIntAction(intVal));
-		pan.add(tf);
-
-		panel.add(pan);
-		configValueMap.put(intVal, tf);
-		intVal.addObserver(this);
-	}
-
-	private class SPIConfigBitAction implements ActionListener {
-
-		private final SPIConfigBit bitConfig;
-
-		SPIConfigBitAction(final SPIConfigBit bitCfg) {
-			bitConfig = bitCfg;
-		}
-
-		@Override
-		public void actionPerformed(final ActionEvent e) {
-			final JRadioButton button = (JRadioButton) e.getSource();
-			bitConfig.set(button.isSelected());
-			setFileModified();
-		}
-	}
-
-	private class SPIConfigIntAction implements ActionListener {
-
-		private final SPIConfigInt intConfig;
-
-		SPIConfigIntAction(final SPIConfigInt intCfg) {
-			intConfig = intCfg;
-		}
-
-		@Override
-		public void actionPerformed(final ActionEvent e) {
-			final JTextField tf = (JTextField) e.getSource();
-
-			try {
-				intConfig.set(Integer.parseInt(tf.getText()));
-				setFileModified();
-
-				tf.setBackground(Color.white);
-			}
-			catch (final Exception ex) {
-				tf.selectAll();
-				tf.setBackground(Color.red);
-
-				Biasgen.log.warning(ex.toString());
-			}
-		}
-	}
-
-	private void setFileModified() {
-		if ((((AEChip) getChip()) != null) && (((AEChip) getChip()).getAeViewer() != null)
-			&& (((AEChip) getChip()).getAeViewer().getBiasgenFrame() != null)) {
-			((AEChip) getChip()).getAeViewer().getBiasgenFrame().setFileModified(true);
-		}
 	}
 
 	public static SPIConfigValue getConfigValueByName(final List<SPIConfigValue> configList, final String name) {

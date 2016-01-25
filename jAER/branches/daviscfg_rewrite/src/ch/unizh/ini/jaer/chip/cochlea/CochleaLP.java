@@ -196,7 +196,7 @@ public class CochleaLP extends CochleaChip implements Observer {
 			}
 		}
 		catch (final ClassCastException e) {
-			log.warning(e.getMessage() + ": probably this chip object has a biasgen but the hardware interface doesn't, ignoring");
+			Chip.log.warning(e.getMessage() + ": probably this chip object has a biasgen but the hardware interface doesn't, ignoring");
 		}
 	}
 
@@ -712,7 +712,7 @@ public class CochleaLP extends CochleaChip implements Observer {
 		private CochleaLPControlPanel.CochleaChannelControlPanel controlPanel = null;
 
 		public CochleaChannel(final String configName, final String toolTip, final int channelAddr) {
-			super(configName, toolTip);
+			super(configName, toolTip, (AEChip) biasgen.getChip());
 
 			channelAddress = channelAddr;
 
