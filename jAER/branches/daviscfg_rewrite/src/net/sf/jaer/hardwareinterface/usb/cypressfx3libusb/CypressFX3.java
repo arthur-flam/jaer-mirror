@@ -780,6 +780,9 @@ public class CypressFX3 implements AEMonitorInterface, ReaderBufferControl, USBI
 		configBytes[2] = (byte) ((param >>> 8) & 0x00FF);
 		configBytes[3] = (byte) ((param >>> 0) & 0x00FF);
 
+		// System.out.println(String.format("SPI Config sent with modAddr=%d, paramAddr=%d, value=%d.\n", moduleAddr,
+		// paramAddr, param));
+
 		sendVendorRequest(CypressFX3.VR_FPGA_CONFIG, moduleAddr, paramAddr, configBytes);
 	}
 
