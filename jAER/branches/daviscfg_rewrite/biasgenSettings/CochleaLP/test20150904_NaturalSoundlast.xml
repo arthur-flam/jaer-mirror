@@ -22,22 +22,22 @@
                   <entry key="CochleaAMS1cRollingCochleagramADCDisplayMethod.gain1" value="1"/>
                   <entry key="CochleaAMS1cRollingCochleagramADCDisplayMethod.gain2" value="1"/>
                   <entry key="CochleaAMS1cRollingCochleagramADCDisplayMethod.gain3" value="1"/>
-                  <entry key="SPIConfigBit.ScannerEnable" value="false"/>
-                  <entry key="SPIConfigBit.ScannerEar" value="false"/>
-                  <entry key="SPIConfigInt.ScannerChannel" value="108"/>
-                  <entry key="SPIConfigBit.DACRun" value="true"/>
-                  <entry key="SPIConfigBit.MultiplexerRun" value="true"/>
-                  <entry key="SPIConfigBit.AERRun" value="false"/>
-                  <entry key="SPIConfigInt.AERAckDelay" value="0"/>
-                  <entry key="SPIConfigInt.AERAckExtension" value="0"/>
-                  <entry key="SPIConfigBit.AERWaitOnTransferStall" value="false"/>
-                  <entry key="SPIConfigBit.AERExternalAERControl" value="false"/>
-                  <entry key="SPIConfigInt.ChipResetCapConfigADM" value="0"/>
-                  <entry key="SPIConfigInt.ChipDelayCapConfigADM" value="0"/>
-                  <entry key="SPIConfigBit.ChipComparatorSelfOsc" value="false"/>
-                  <entry key="SPIConfigInt.ChipLNAGainConfig" value="0"/>
-                  <entry key="SPIConfigBit.ChipLNADoubleInputSelect" value="false"/>
-                  <entry key="SPIConfigBit.ChipTestScannerBias" value="false"/>
+                  <entry key="CochleaLP.ScannerEnable" value="false"/>
+                  <entry key="CochleaLP.ScannerEar" value="false"/>
+                  <entry key="CochleaLP.ScannerChannel" value="108"/>
+                  <entry key="CochleaLP.DACRun" value="true"/>
+                  <entry key="CochleaLP.MultiplexerRun" value="true"/>
+                  <entry key="CochleaLP.AERRun" value="false"/>
+                  <entry key="CochleaLP.AERAckDelay" value="0"/>
+                  <entry key="CochleaLP.AERAckExtension" value="0"/>
+                  <entry key="CochleaLP.AERWaitOnTransferStall" value="false"/>
+                  <entry key="CochleaLP.AERExternalAERControl" value="false"/>
+                  <entry key="CochleaLP.ChipResetCapConfigADM" value="0"/>
+                  <entry key="CochleaLP.ChipDelayCapConfigADM" value="0"/>
+                  <entry key="CochleaLP.ChipComparatorSelfOsc" value="false"/>
+                  <entry key="CochleaLP.ChipLNAGainConfig" value="0"/>
+                  <entry key="CochleaLP.ChipLNADoubleInputSelect" value="false"/>
+                  <entry key="CochleaLP.ChipTestScannerBias" value="false"/>
                   <entry key="CochleaChannel.Channel 0" value="803631"/>
                   <entry key="CochleaChannel.Channel 1" value="803630"/>
                   <entry key="CochleaChannel.Channel 2" value="803630"/>
@@ -160,8 +160,8 @@
                   <entry key="Masterbias.rx" value="8200.0"/>
                   <entry key="Masterbias.rint" value="46000.0"/>
                   <entry key="Masterbias.internalResistorUsed" value="false"/>
-                  <entry key="SPIConfigBit.ForceBiasEnable" value="true"/>
-                  <entry key="SPIConfigBit.TestAEREnable" value="false"/>
+                  <entry key="CochleaLP.ForceBiasEnable" value="true"/>
+                  <entry key="CochleaLP.TestAEREnable" value="false"/>
                   <entry key="CochleaLPControlPanel.bgTabbedPaneSelectedIndex" value="2"/>
                   <entry key="ScannerHardwareInterface.scanX" value="0"/>
                   <entry key="ScannerHardwareInterface.scanContinuouslyEnabled" value="false"/>

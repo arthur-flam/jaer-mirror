@@ -13,7 +13,6 @@
             <map/>
             <node name="davis">
               <map>
-                <entry key="BackgroundActivityFilter.filterEnabled" value="false"/>
                 <entry key="Davis346cBSI.AddressedIPotCF.ADCcompBp.BitValueCoarse" value="2"/>
                 <entry key="Davis346cBSI.AddressedIPotCF.ADCcompBp.BitValueFine" value="20"/>
                 <entry key="Davis346cBSI.AddressedIPotCF.ADCcompBp.Enabled" value="true"/>
@@ -158,88 +157,6 @@
                 <entry key="Davis346cBSI.VDACBias.ApsCas.VdacBitValue" value="21"/>
                 <entry key="Davis346cBSI.VDACBias.apsOverflowLevel.BufBitValue" value="6"/>
                 <entry key="Davis346cBSI.VDACBias.apsOverflowLevel.VdacBitValue" value="27"/>
-                <entry key="DavisBaseCamera.bgTabbedPaneSelectedIndex" value="0"/>
-                <entry key="FilterChain.timeLimitEnabled" value="false"/>
-                <entry key="FilterChain.timeLimitMs" value="10"/>
-                <entry key="HotPixelFilter.filterEnabled" value="false"/>
-                <entry key="IMU.AccelScale" value="ImuAccelScaleG8"/>
-                <entry key="IMU.GyroScale" value="GyroFullScaleDegPerSec1000"/>
-                <entry key="IMU.displayEnabled" value="true"/>
-                <entry key="Info.filterEnabled" value="false"/>
-                <entry key="Info.useLocalTimeZone" value="true"/>
-                <entry key="JaerAviWriter.filterEnabled" value="false"/>
-                <entry key="Masterbias.internalResistorUsed" value="false"/>
-                <entry key="Masterbias.rint" value="46000.0"/>
-                <entry key="Masterbias.rx" value="8200.0"/>
-                <entry key="RefractoryFilter.filterEnabled" value="false"/>
-                <entry key="RotateFilter.filterEnabled" value="false"/>
-                <entry key="SPIConfigBit.AERnArow" value="true"/>
-                <entry key="SPIConfigBit.ApsRun" value="true"/>
-                <entry key="SPIConfigBit.DetectFallingEdges" value="false"/>
-                <entry key="SPIConfigBit.DetectPulsePolarity" value="true"/>
-                <entry key="SPIConfigBit.DetectPulses" value="true"/>
-                <entry key="SPIConfigBit.DetectRisingEdges" value="false"/>
-                <entry key="SPIConfigBit.DropAPSOnTransferStall" value="false"/>
-                <entry key="SPIConfigBit.DropDVSOnTransferStall" value="true"/>
-                <entry key="SPIConfigBit.DropExtInputOnTransferStall" value="true"/>
-                <entry key="SPIConfigBit.DropIMUOnTransferStall" value="false"/>
-                <entry key="SPIConfigBit.DvsRun" value="true"/>
-                <entry key="SPIConfigBit.ExternalAERControl" value="false"/>
-                <entry key="SPIConfigBit.FilterBackgroundActivity" value="false"/>
-                <entry key="SPIConfigBit.FilterRowOnlyEvents" value="true"/>
-                <entry key="SPIConfigBit.ForceChipBiasEnable" value="false"/>
-                <entry key="SPIConfigBit.GeneratePulsePolarity" value="false"/>
-                <entry key="SPIConfigBit.GenerateUseCustomSignal" value="false"/>
-                <entry key="SPIConfigBit.GlobalShutter" value="true"/>
-                <entry key="SPIConfigBit.ImuRun" value="true"/>
-                <entry key="SPIConfigBit.LPCycle" value="false"/>
-                <entry key="SPIConfigBit.RampShortReset" value="false"/>
-                <entry key="SPIConfigBit.ResetCalibNeuron" value="true"/>
-                <entry key="SPIConfigBit.ResetRead" value="true"/>
-                <entry key="SPIConfigBit.ResetTestPixel" value="true"/>
-                <entry key="SPIConfigBit.RunDetector" value="false"/>
-                <entry key="SPIConfigBit.RunGenerator" value="false"/>
-                <entry key="SPIConfigBit.SampleEnable" value="true"/>
-                <entry key="SPIConfigBit.SelectGrayCounter" value="true"/>
-                <entry key="SPIConfigBit.TempStandby" value="false"/>
-                <entry key="SPIConfigBit.TestADC" value="false"/>
-                <entry key="SPIConfigBit.TypeNCalibNeuron" value="true"/>
-                <entry key="SPIConfigBit.UseAOut" value="true"/>
-                <entry key="SPIConfigBit.UseInternalADC" value="true"/>
-                <entry key="SPIConfigBit.WaitOnTransferStall" value="true"/>
-                <entry key="SPIConfigInt.AccelFullScale" value="2"/>
-                <entry key="SPIConfigInt.AckDelayColumn" value="0"/>
-                <entry key="SPIConfigInt.AckDelayRow" value="4"/>
-                <entry key="SPIConfigInt.AckExtensionColumn" value="0"/>
-                <entry key="SPIConfigInt.AckExtensionRow" value="1"/>
-                <entry key="SPIConfigInt.AnalogMux0" value="0"/>
-                <entry key="SPIConfigInt.AnalogMux1" value="0"/>
-                <entry key="SPIConfigInt.AnalogMux2" value="0"/>
-                <entry key="SPIConfigInt.BiasMux0" value="0"/>
-                <entry key="SPIConfigInt.ColumnSettle" value="30"/>
-                <entry key="SPIConfigInt.DetectPulseLength" value="120"/>
-                <entry key="SPIConfigInt.DigitalLowPassFilter" value="1"/>
-                <entry key="SPIConfigInt.DigitalMux0" value="0"/>
-                <entry key="SPIConfigInt.DigitalMux1" value="0"/>
-                <entry key="SPIConfigInt.DigitalMux2" value="0"/>
-                <entry key="SPIConfigInt.DigitalMux3" value="0"/>
-                <entry key="SPIConfigInt.EarlyPacketDelay" value="8"/>
-                <entry key="SPIConfigInt.Exposure" value="4000"/>
-                <entry key="SPIConfigInt.FilterBackgroundActivityDeltaTime" value="20000"/>
-                <entry key="SPIConfigInt.FrameDelay" value="1000"/>
-                <entry key="SPIConfigInt.GeneratePulseInterval" value="120"/>
-                <entry key="SPIConfigInt.GeneratePulseLength" value="60"/>
-                <entry key="SPIConfigInt.GyroFullScale" value="2"/>
-                <entry key="SPIConfigInt.LPWakeup" value="1"/>
-                <entry key="SPIConfigInt.NullSettle" value="3"/>
-                <entry key="SPIConfigInt.RampReset" value="10"/>
-                <entry key="SPIConfigInt.ResetSettle" value="10"/>
-                <entry key="SPIConfigInt.RowSettle" value="10"/>
-                <entry key="SPIConfigInt.SampleRateDivider" value="0"/>
-                <entry key="SPIConfigInt.SampleSettle" value="30"/>
-                <entry key="VideoControl.displayEvents" value="true"/>
-                <entry key="VideoControl.displayFrames" value="true"/>
-                <entry key="XYTypeFilter.filterEnabled" value="false"/>
               </map>
             </node>
           </node>
