@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.logging.Level;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -255,6 +256,13 @@ public class SampleProb extends CochleaChip implements Observer {
 			setBatchEditOccurring(true);
 			loadPreferences();
 			setBatchEditOccurring(false);
+
+			try {
+				sendConfiguration(this);
+			}
+			catch (final HardwareInterfaceException ex) {
+				net.sf.jaer.biasgen.Biasgen.log.log(Level.SEVERE, null, ex);
+			}
 		}
 
 		@Override
@@ -402,15 +410,18 @@ public class SampleProb extends CochleaChip implements Observer {
 			}
 
 			for (final Pot iPot : ipots.getPots()) {
-				update(iPot, null);
+				iPot.setChanged();
+				iPot.notifyObservers();
 			}
 
 			for (final Pot vPot : vpots.getPots()) {
-				update(vPot, null);
+				vPot.setChanged();
+				vPot.notifyObservers();
 			}
 
 			for (final AbstractConfigValue spiCfg : allPreferencesList) {
-				update(spiCfg, null);
+				spiCfg.setChanged();
+				spiCfg.notifyObservers();
 			}
 		}
 	}
