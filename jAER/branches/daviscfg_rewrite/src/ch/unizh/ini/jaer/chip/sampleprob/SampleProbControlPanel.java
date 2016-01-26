@@ -140,7 +140,7 @@ public final class SampleProbControlPanel extends JTabbedPane implements Observe
 	 * changes
 	 */
 	@Override
-	public void update(final Observable observable, final Object object) {
+	public synchronized void update(final Observable observable, final Object object) {
 		try {
 			if (observable instanceof SPIConfigBit) {
 				final SPIConfigBit cfgBit = (SPIConfigBit) observable;

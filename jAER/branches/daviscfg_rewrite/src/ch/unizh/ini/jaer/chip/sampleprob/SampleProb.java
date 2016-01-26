@@ -334,12 +334,7 @@ public class SampleProb extends CochleaChip implements Observer {
 		 *            notifyChange used at present
 		 */
 		@Override
-		public void update(final Observable observable, final Object object) {
-			// while it is sending something
-			if (isBatchEditOccurring()) {
-				return;
-			}
-
+		public synchronized void update(final Observable observable, final Object object) {
 			if (getHardwareInterface() != null) {
 				final CypressFX3 fx3HwIntf = (CypressFX3) getHardwareInterface();
 
