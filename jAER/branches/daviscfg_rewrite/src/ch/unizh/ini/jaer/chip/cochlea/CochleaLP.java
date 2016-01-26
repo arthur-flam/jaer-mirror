@@ -523,7 +523,12 @@ public class CochleaLP extends CochleaChip implements Observer {
 				open();
 			}
 
-			for (final ShiftedSourceBiasCF sSrc : ssBiases) {
+			for (final AbstractConfigValue spiCfg : allPreferencesList) {
+				spiCfg.setChanged();
+				spiCfg.notifyObservers();
+			}
+                        
+                        for (final ShiftedSourceBiasCF sSrc : ssBiases) {
 				sSrc.setChanged();
 				sSrc.notifyObservers();
 			}
@@ -538,10 +543,7 @@ public class CochleaLP extends CochleaChip implements Observer {
 				vPot.notifyObservers();
 			}
 
-			for (final AbstractConfigValue spiCfg : allPreferencesList) {
-				spiCfg.setChanged();
-				spiCfg.notifyObservers();
-			}
+
 		}
 	}
 
