@@ -1070,9 +1070,6 @@ public class DavisConfig extends Biasgen implements DavisDisplayConfigInterface,
 		public void update(final Observable o, final Object arg) {
 			setChanged();
 			notifyObservers(arg);
-			// if (o == ) {
-			// propertyChangeSupport.firePropertyChange(EVENT_GRAPHICS_DISPLAY_INTENSITY, null, runAdc.isSet());
-			// } // TODO
 		}
 
 		/**
