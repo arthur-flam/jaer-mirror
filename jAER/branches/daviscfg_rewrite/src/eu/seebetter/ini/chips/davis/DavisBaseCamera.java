@@ -636,7 +636,7 @@ abstract public class DavisBaseCamera extends DavisChip implements RemoteControl
 			return address;
 		}
 
-		protected final void increaseFrameCount(final int i) {
+		public final void increaseFrameCount(final int i) {
 			frameCount += i;
 		}
 

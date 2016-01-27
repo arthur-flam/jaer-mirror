@@ -257,7 +257,7 @@ public class AEFileInputStream extends DataInputStream implements AEFileInputStr
         try {
             EventRaw ev = readEventForwards(); // init timestamp
             firstTimestamp = ev.timestamp;
-            if(true == jaer3EnableFlg) {
+            if(true == jaer3EnableFlg && fileSize <= chunkSizeBytes) {
                 lastTimestamp = jaer3BufferParser.getLastTimeStamp();
             } else {
                 position(size() - 2);
@@ -314,7 +314,7 @@ public class AEFileInputStream extends DataInputStream implements AEFileInputStr
         int lastTs = mostRecentTimestamp;
         int lastBufferPosition = 0;
         
-        ByteBuffer tmpEventBuffer = ByteBuffer.allocate(32);       
+        ByteBuffer tmpEventBuffer = ByteBuffer.allocate(16);       
         
         // if(jaer3fileinputstream!=null){
             // return jaer3fileinputstream.readEventForwards();
@@ -743,6 +743,9 @@ public class AEFileInputStream extends DataInputStream implements AEFileInputStr
         } catch (NonMonotonicTimeException e) {
             log.log(Level.INFO, "rewind from timestamp={0} to timestamp={1}", new Object[]{e.getPreviousTimestamp(), e.getCurrentTimestamp()});
         }
+        if(this.jaer3EnableFlg == true) {
+           jaer3BufferParser.setInFrameEvent(false);
+        }
         currentStartTimestamp = mostRecentTimestamp;
 //        System.out.println("AEInputStream.rewind(): set position="+byteBuffer.position()+" mostRecentTimestamp="+mostRecentTimestamp);
         getSupport().firePropertyChange(AEInputStream.EVENT_POSITION, oldPosition, position());
@@ -775,13 +778,15 @@ public class AEFileInputStream extends DataInputStream implements AEFileInputStr
         try {
             if ((newChunkNumber = getChunkNumber(event)) != chunkNumber) {
                 mapChunk(newChunkNumber);
+                
             }
             byteBuffer.position((int) ((event * eventSizeBytes) % chunkSizeBytes));
             
             // Update in buffer at the same time, just for jAER 3.0 format file
             if(this.jaer3EnableFlg) {
                 jaer3BufferParser.setInBuffer(byteBuffer);
-                jaer3BufferParser.setInBufferOrder(ByteOrder.LITTLE_ENDIAN);               
+                jaer3BufferParser.setInBufferOrder(ByteOrder.LITTLE_ENDIAN); 
+                jaer3BufferParser.setInFrameEvent(false);
             }
             position = event;
         } catch (ClosedByInterruptException e3) {
@@ -1175,6 +1180,13 @@ public class AEFileInputStream extends DataInputStream implements AEFileInputStr
             chunkNumber = 0; // overflow will wrap<0
         }
         mapChunk(chunkNumber);
+        
+        // Update in buffer at the same time, just for jAER 3.0 format file
+        if(this.jaer3EnableFlg) {
+            jaer3BufferParser.setInBuffer(byteBuffer);
+            jaer3BufferParser.setInBufferOrder(ByteOrder.LITTLE_ENDIAN); 
+            jaer3BufferParser.setInFrameEvent(false);
+        }
     }
 
     /**
@@ -1190,6 +1202,13 @@ public class AEFileInputStream extends DataInputStream implements AEFileInputStr
             chunkNumber = 0; // overflow will wrap<0
         }
         mapChunk(chunkNumber);
+        
+        // Update in buffer at the same time, just for jAER 3.0 format file
+        if(this.jaer3EnableFlg) {
+            jaer3BufferParser.setInBuffer(byteBuffer);
+            jaer3BufferParser.setInBufferOrder(ByteOrder.LITTLE_ENDIAN); 
+            jaer3BufferParser.setInFrameEvent(false);
+        }
     }
 
     private int chunksMapped = 0;
